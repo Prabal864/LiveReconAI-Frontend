@@ -42,18 +42,18 @@ const Features = () => {
 
   return (
     <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Glow Line */}
+      
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[120%] max-w-6xl opacity-20 pointer-events-none">
          <GlowCurvedLine className="absolute top-0 left-1/4 h-full w-48 -translate-x-1/2 rotate-45" color="purple" />
       </div>
 
-      {/* Background blobs */}
+      
       <div className="absolute top-0 left-0 w-full h-full bg-[#0a0a0f] -z-20"></div>
       
-      {/* Stronger Background Gradient */}
+      
       <div className="absolute inset-0 bg-linear-to-b from-[#0a0a0f] via-purple-900/5 to-[#0a0a0f] pointer-events-none"></div>
 
-      {/* Large Glow Orbs */}
+      
       <div className="absolute top-1/4 -left-64 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] -z-10"></div>
       <div className="absolute bottom-1/4 -right-64 w-[600px] h-[600px] bg-cyan-600/20 rounded-full blur-[120px] -z-10"></div>
 
@@ -78,22 +78,22 @@ const Features = () => {
                 index === 0 || index === 3 ? 'lg:col-span-2' : 'lg:col-span-1'
               }`}
             >
-              {/* Animated Gradient Border - The "Wave" */}
+              
               <div className="absolute inset-0 rounded-3xl bg-linear-to-r from-purple-600 via-cyan-500 to-purple-600 opacity-0 group-hover:opacity-100 group-active:opacity-100 animate-border-wave transition-opacity duration-500"></div>
               
-              {/* Glow effect */}
+              
               <div className="absolute inset-0 bg-linear-to-r from-purple-500/20 via-cyan-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 group-active:opacity-100 blur-2xl transition-opacity duration-500 -z-10"></div>
               
-              {/* Card Content */}
+              
               <div className="relative h-full bg-[#0a0a0f] rounded-3xl p-8 md:p-10 border border-white/5 group-hover:border-transparent group-active:border-transparent transition-colors z-10 overflow-hidden">
                 
-                {/* Inner Background Pattern */}
+           
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:24px_24px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
-                {/* Hover Gradient Overlay */}
+                
                 <div className="absolute inset-0 bg-linear-to-br from-purple-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-                {/* Large Background Icon (Faded) */}
+                
                 <div className="absolute -right-10 -bottom-10 w-64 h-64 text-white/5 group-hover:text-white/10 transition-colors duration-500 rotate-12 pointer-events-none">
                     {feature.icon}
                 </div>
@@ -113,7 +113,7 @@ const Features = () => {
                       {feature.description}
                     </p>
 
-                    {/* Learn More Link (Visible on Hover) */}
+                    
                     <div className="mt-auto pt-8 flex items-center gap-2 text-sm font-medium text-purple-400 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
                         <span>Explore Feature</span>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
