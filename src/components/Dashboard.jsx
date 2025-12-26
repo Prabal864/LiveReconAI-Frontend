@@ -22,12 +22,33 @@ const Dashboard = () => {
       <main className="dashboard-main">
         <header className="dashboard-header">
           <h2>Financial Analytics</h2>
-          <div className="dashboard-user">
-            <select>
-              <option>This Month</option>
-              <option>Last Month</option>
-            </select>
-            <div className="user-avatar"></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="dashboard-user">
+              <select>
+                <option>This Month</option>
+                <option>Last Month</option>
+              </select>
+              <div className="user-avatar"></div>
+            </div>
+            <button
+              className="logout-btn"
+              style={{
+                background: 'linear-gradient(90deg,#a259ff,#ff6bcb)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 18px',
+                fontWeight: 600,
+                fontSize: '1rem',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px #a259ff33',
+                marginLeft: '12px',
+                transition: 'background 0.2s',
+              }}
+              onClick={() => alert('Logged out!')}
+            >
+              Logout
+            </button>
           </div>
         </header>
         <section className="dashboard-content">
@@ -36,10 +57,58 @@ const Dashboard = () => {
               <div>Total Spend</div>
               <div className="spend-amount">₹42,593</div>
               <div className="spend-change">+12.5% <span>vs last month</span></div>
-              <div className="spend-tabs">
-                <button className="active">Expenses</button>
-                <button>Income</button>
-                <button>Savings</button>
+              <div className="spend-tabs" style={{gap:'12px'}}>
+                <button
+                  className="dashboard-btn-gradient"
+                  style={{
+                    background: 'linear-gradient(90deg,#a259ff,#ff6bcb)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '999px',
+                    padding: '8px 28px',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    boxShadow: '0 2px 16px #a259ff33',
+                    transition: 'background 0.2s',
+                    outline: 'none',
+                  }}
+                >
+                  Expenses
+                </button>
+                <button
+                  className="dashboard-btn-gradient"
+                  style={{
+                    background: 'linear-gradient(90deg,#00cfff,#a259ff)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '999px',
+                    padding: '8px 28px',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    boxShadow: '0 2px 16px #00cfff33',
+                    transition: 'background 0.2s',
+                    outline: 'none',
+                  }}
+                >
+                  Income
+                </button>
+                <button
+                  className="dashboard-btn-gradient"
+                  style={{
+                    background: 'linear-gradient(90deg,#ff6bcb,#a259ff)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '999px',
+                    padding: '8px 28px',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    boxShadow: '0 2px 16px #ff6bcb33',
+                    transition: 'background 0.2s',
+                    outline: 'none',
+                  }}
+                >
+                  Savings
+                </button>
               </div>
               <div className="spend-bar-chart">
                 {/* Bar chart mockup */}
