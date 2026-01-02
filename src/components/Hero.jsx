@@ -420,7 +420,7 @@ const Hero = () => {
                            ))}
                         </div>
                      </div>
-
+                           
                      {/* Budget Status (Donut) */}
                      <div className="bg-[#0a0a0f] border border-white/5 rounded-xl p-5 flex-1 flex items-center justify-between min-h-[140px]">
                         <div>
@@ -699,26 +699,26 @@ const Hero = () => {
       </div>
 
       <div className="max-w-7xl mx-auto text-center relative z-10">
-        <div className="mb-6">
-          <span className="inline-block px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-sm font-medium backdrop-blur-sm">
+        <div className="mb-8">
+          <span className="inline-block px-5 py-2 bg-[#13131f] border border-purple-500/30 rounded-full text-purple-300 text-sm font-medium backdrop-blur-sm shadow-[0_0_15px_rgba(168,85,247,0.15)]">
             Powered by Setu Account Aggregator + AI
           </span>
         </div>
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6">
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 tracking-tight">
           <span className="text-white">Meet your </span>
-          <span className="bg-linear-to-r from-purple-500 via-pink-500 to-cyan-400 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-[#a259ff] via-[#ff6bcb] to-[#00cfff] bg-clip-text text-transparent">
             finance copilot
           </span>
         </h1>
-        <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-10">
+        <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-10 leading-relaxed">
           Turn raw financial data into clear, actionable insights. Consent-based access, 
           visualization-ready transactions, and natural-language Q&A—all in one platform.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button className="bg-linear-to-r from-purple-600 to-cyan-500 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/25">
+        <div className="flex flex-col sm:flex-row gap-5 justify-center">
+          <button className="bg-gradient-to-r from-[#a259ff] to-[#00cfff] text-white px-8 py-3.5 rounded-lg font-bold text-lg hover:opacity-90 transition-all shadow-[0_0_20px_rgba(162,89,255,0.3)] transform hover:-translate-y-0.5">
             Get Started
           </button>
-          <button className="border border-gray-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-800 transition-colors backdrop-blur-sm">
+          <button className="bg-transparent border border-gray-700 text-white px-8 py-3.5 rounded-lg font-semibold text-lg hover:bg-white/5 hover:border-gray-500 transition-all backdrop-blur-sm">
             Watch Demo
           </button>
         </div>
