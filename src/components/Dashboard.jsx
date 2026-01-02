@@ -75,7 +75,7 @@ const Dashboard = () => {
         <div className="dashboard-card dashboard-spend">
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
           <div>
-            <h3 style={{color:'#94a3b8', fontSize:'0.9rem', fontWeight:'500'}}>Total Spend</h3>
+            <h3 style={{color:'#94a3b8', fontSize:'0.85rem', fontWeight:'500'}}>Total Spend</h3>
             <div className="spend-amount">₹42,593</div>
             <div className="spend-change">+12.5% <span style={{color:'#94a3b8', fontWeight:'400'}}>vs last month</span></div>
           </div>
@@ -96,7 +96,7 @@ const Dashboard = () => {
           <div className="dashboard-card dashboard-categories">
           <h3 style={{marginBottom:'24px'}}>Top Categories</h3>
           <div className="category-row">
-            <span style={{width:'120px', fontSize:'0.9rem'}}>Food & Dining</span>
+            <span style={{width:'120px', fontSize:'0.85rem'}}>Food & Dining</span>
             <div className="category-bar food"><div className="category-bar-fill" style={{width:'75%'}}></div></div>
             <span style={{fontWeight:'600'}}>₹12,400</span>
           </div>
