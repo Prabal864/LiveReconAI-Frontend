@@ -4,7 +4,15 @@ import "../index.css";
 import "../styles/Transactions.css";
 
 const Dashboard = () => {
-  const navItems = ["Home", "Transactions", "Budgeting", "Investments", "Analytics", "Anomalies", "Chat"];
+  const navItems = [
+    { label: "Home", icon: "🏠" },
+    { label: "Transactions", icon: "💸" },
+    { label: "Budgeting", icon: "📊" },
+    { label: "Investments", icon: "📈" },
+    { label: "Analytics", icon: "📊" },
+    { label: "Anomalies", icon: "⚠️" },
+    { label: "Chat", icon: "💬" },
+  ];
   const [activeSection, setActiveSection] = useState("Analytics");
   const [consentId, setConsentId] = useState("");
   const [page, setPage] = useState(1);
@@ -12,8 +20,8 @@ const Dashboard = () => {
   const { transactions, allTransactions, loading, error, fetchTransactions, total, paginate, rawResponse } = useTransactionsByConsentId();
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  const handleSidebarClick = (item) => {
-    setActiveSection(item);
+  const handleSidebarClick = (itemLabel) => {
+    setActiveSection(itemLabel);
   };
 
   const handleFetch = async () => {
@@ -62,8 +70,9 @@ const Dashboard = () => {
   };
 
   const renderAnalyticsOverview = () => (
-    <div className="dashboard-row">
-      <div className="dashboard-card dashboard-spend">
+    <>
+      <div className="dashboard-row">
+        <div className="dashboard-card dashboard-spend">
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
           <div>
             <h3 style={{color:'#94a3b8', fontSize:'0.9rem', fontWeight:'500'}}>Total Spend</h3>
@@ -81,10 +90,10 @@ const Dashboard = () => {
             <div key={i} className={`bar ${i === 5 ? 'bar-active' : ''}`} style={{height: `${h}%`}}></div>
           ))}
         </div>
-      </div>
+        </div>
 
-      <div style={{display:'flex', flexDirection:'column', gap:'24px', flex:'1'}}>
-        <div className="dashboard-card dashboard-categories">
+        <div className="dashboard-aside">
+          <div className="dashboard-card dashboard-categories">
           <h3 style={{marginBottom:'24px'}}>Top Categories</h3>
           <div className="category-row">
             <span style={{width:'120px', fontSize:'0.9rem'}}>Food & Dining</span>
@@ -101,17 +110,95 @@ const Dashboard = () => {
             <div className="category-bar entertainment"><div className="category-bar-fill" style={{width:'30%'}}></div></div>
             <span style={{fontWeight:'600'}}>₹4,500</span>
           </div>
-        </div>
+          </div>
 
-        <div className="dashboard-card dashboard-budget">
-          <h3 style={{alignSelf:'flex-start', marginBottom:'16px'}}>Budget Status</h3>
-          <div className="budget-circle">
-            <span>72%</span>
-            <span>Used</span>
+          <div className="dashboard-card dashboard-budget">
+            <h3 style={{alignSelf:'flex-start', marginBottom:'16px'}}>Budget Status</h3>
+            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%'}}>
+              <div>
+                <div style={{fontSize:'1.4rem', fontWeight:800}}>72%</div>
+                <div style={{color:'#94a3b8', fontSize:'0.9rem'}}>of monthly limit used</div>
+              </div>
+              <div className="budget-circle" style={{marginBottom: 0}}>
+                <span style={{fontSize:'1.2rem'}}>72%</span>
+                <span>Safe</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <div className="dashboard-row">
+        <div className="dashboard-card dashboard-transactions">
+          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+            <h3 style={{margin: 0}}>Recent Transactions</h3>
+            <span className="view-all" onClick={() => setActiveSection('Transactions')}>View All</span>
+          </div>
+          <div className="transaction-list">
+            <div className="transaction netflix">
+              <div className="icon">N</div>
+              <div>
+                <div style={{fontWeight: 700}}>Netflix Subscription</div>
+                <div className="date">Today, 10:00 AM</div>
+              </div>
+              <div className="amount">-₹649</div>
+            </div>
+            <div className="transaction uber">
+              <div className="icon">U</div>
+              <div>
+                <div style={{fontWeight: 700}}>Uber Ride</div>
+                <div className="date">Yesterday, 6:30 PM</div>
+              </div>
+              <div className="amount">-₹450</div>
+            </div>
+            <div className="transaction salary">
+              <div className="icon">S</div>
+              <div>
+                <div style={{fontWeight: 700}}>Salary Credit</div>
+                <div className="date">Oct 30, 9:00 AM</div>
+              </div>
+              <div className="amount credit">+₹85,000</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="dashboard-card dashboard-recurring">
+          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+            <h3 style={{margin: 0}}>Recurring Payments</h3>
+            <span className="next-days">Next 7 Days</span>
+          </div>
+          <div className="recurring-list">
+            <div className="recurring">
+              <div className="dot" />
+              <div style={{minWidth: 140}}>Spotify Premium</div>
+              <div className="recurring-bar"><div className="recurring-bar-fill" style={{width:'70%'}} /></div>
+              <div>
+                <div style={{fontWeight: 700}}>₹119</div>
+                <div className="due">Due tomorrow</div>
+              </div>
+            </div>
+            <div className="recurring">
+              <div className="dot" />
+              <div style={{minWidth: 140}}>Internet Bill</div>
+              <div className="recurring-bar"><div className="recurring-bar-fill" style={{width:'50%'}} /></div>
+              <div>
+                <div style={{fontWeight: 700}}>₹999</div>
+                <div className="due">Due in 3 days</div>
+              </div>
+            </div>
+            <div className="recurring">
+              <div className="dot" />
+              <div style={{minWidth: 140}}>Gym Membership</div>
+              <div className="recurring-bar"><div className="recurring-bar-fill" style={{width:'35%'}} /></div>
+              <div>
+                <div style={{fontWeight: 700}}>₹2,500</div>
+                <div className="due">Due in 5 days</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 
   const renderBudgeting = () => (
@@ -233,11 +320,12 @@ const Dashboard = () => {
           <ul>
             {navItems.map((item) => (
               <li
-                key={item}
-                className={activeSection === item ? "active" : ""}
-                onClick={() => handleSidebarClick(item)}
+                key={item.label}
+                className={activeSection === item.label ? "active" : ""}
+                onClick={() => handleSidebarClick(item.label)}
               >
-                {item}
+                <span className="sidebar-icon" aria-hidden="true">{item.icon}</span>
+                <span>{item.label}</span>
               </li>
             ))}
           </ul>
