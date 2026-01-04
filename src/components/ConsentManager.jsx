@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSetu } from '../contexts/SetuContext';
 import Toast from './Toast';
+import { LogOut, Undo2 } from 'lucide-react';
 import '../styles/ConsentManager.css';
 
 const ConsentManager = () => {
@@ -150,20 +151,67 @@ const ConsentManager = () => {
     }
   };
 
+  const handleRevoke = async (e, consentId) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to revoke this consent?")) return;
+
+    try {
+      const response = await fetch(`http://localhost:8072/api/setu/auth/${consentId}/revokeConsent`, {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        setConsents(prev => prev.map(c => c.id === consentId ? { ...c, status: 'REVOKED' } : c));
+        if (selectedConsent && selectedConsent.id === consentId) {
+          setSelectedConsent(prev => ({ ...prev, status: 'REVOKED' }));
+        }
+      } else {
+        throw new Error('Failed to revoke');
+      }
+    } catch (err) {
+      console.error("Revoke error:", err);
+      setLocalError('Failed to revoke consent');
+    }
+  };
+
   const error = contextError || localError;
 
   return (
     <div className="consent-manager">
-      <div className="consent-header">
-        <div className="header-content">
-          <h2>Consent Management</h2>
-          <p>Manage your financial data consents securely</p>
+      <div className="consent-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          {token && (
+            <div className="status-indicator" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              background: 'rgba(34, 197, 94, 0.1)', 
+              padding: '6px 12px', 
+              borderRadius: '20px', 
+              border: '1px solid rgba(34, 197, 94, 0.2)',
+              color: 'var(--success-green)',
+              fontSize: '0.85rem',
+              fontWeight: '600'
+            }}>
+              <span className="dot" style={{ width: '6px', height: '6px', background: 'var(--success-green)', borderRadius: '50%', boxShadow: '0 0 6px var(--success-green)' }}></span>
+              <span>Session Active</span>
+            </div>
+          )}
+          {token && (
+            <button onClick={logout} className="logout-btn-styled">
+              <LogOut size={16} />
+              <span>Logout</span>
+            </button>
+          )}
         </div>
-        {token && !showCreateForm && !selectedConsent && (
-          <button className="btn-primary create-btn" onClick={() => setShowCreateForm(true)}>
-            <span className="icon">+</span> New Consent
-          </button>
-        )}
+        
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {token && !showCreateForm && !selectedConsent && (
+            <button className="btn-primary create-btn" onClick={() => setShowCreateForm(true)}>
+              <span className="icon">+</span> New Consent
+            </button>
+          )}
+        </div>
       </div>
 
       {!token ? (
@@ -178,14 +226,6 @@ const ConsentManager = () => {
         </div>
       ) : (
         <div className="dashboard-content">
-          <div className="status-bar">
-            <div className="status-indicator">
-              <span className="dot"></span>
-              <span>Session Active</span>
-            </div>
-            <button onClick={logout} className="btn-text logout-btn">Logout</button>
-          </div>
-
           {/* Create Form View */}
           {showCreateForm && (
             <div className="form-card fade-in">
@@ -302,83 +342,74 @@ const ConsentManager = () => {
                 )}
               </div>
 
-              <div className="details-grid-layout">
-                {/* Left Column: Meta Information */}
-                <div className="meta-column">
-                  {/* ID Card */}
-                  <div className="info-card highlight-card">
-                    <span className="info-label">Consent ID</span>
-                    <div className="code-block">
-                      {selectedConsent.id}
-                    </div>
+              <div className="details-layout-v2">
+                {/* Top Summary Cards */}
+                <div className="summary-cards-row">
+                  <div className="summary-card highlight">
+                    <span className="summary-label">Consent ID</span>
+                    <span className="summary-value mono" title={selectedConsent.id}>{selectedConsent.id}</span>
                   </div>
-
-                  {/* VUA & Date Card */}
-                  <div className="info-card">
-                    <div className="info-row">
-                      <div className="info-group">
-                        <span className="info-label">Data Consumer</span>
-                        <span className="info-value large">{selectedConsent.vua}</span>
-                      </div>
-                    </div>
-                    <div className="divider"></div>
-                    <div className="info-row split">
-                      <div className="info-group">
-                        <span className="info-label">Created</span>
-                        <span className="info-value">{new Date(selectedConsent.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      <div className="info-group">
-                        <span className="info-label">Valid Until</span>
-                        <span className="info-value">{new Date(selectedConsent.dataRange?.to).toLocaleDateString()}</span>
-                      </div>
-                    </div>
+                  <div className="summary-card">
+                    <span className="summary-label">Data Consumer</span>
+                    <span className="summary-value">{selectedConsent.vua}</span>
                   </div>
-
-                  {/* Permissions Card */}
-                  <div className="info-card">
-                    <span className="info-label">Authorized Permissions</span>
-                    <div className="permission-tags">
-                      {selectedConsent.consentTypes?.map(t => (
-                        <div key={t} className="perm-tag">
-                          <span className="check-icon">✓</span>
-                          {t}
-                        </div>
-                      ))}
-                    </div>
+                  <div className="summary-card">
+                    <span className="summary-label">Valid Until</span>
+                    <span className="summary-value">{new Date(selectedConsent.dataRange?.to).toLocaleDateString()}</span>
                   </div>
                 </div>
 
-                {/* Right Column: Linked Accounts */}
-                <div className="accounts-column">
-                  <div className="section-title">
+                {/* Main Content Area */}
+                <div className="main-panel-full">
+                  <div className="section-header">
                     <h3>Linked Accounts</h3>
-                    <span className="count-pill">{selectedConsent.accountsLinked?.length || 0}</span>
+                    <span className="count-badge">{selectedConsent.accountsLinked?.length || 0}</span>
                   </div>
                   
                   {selectedConsent.accountsLinked && selectedConsent.accountsLinked.length > 0 ? (
-                    <div className="accounts-grid">
-                      {selectedConsent.accountsLinked.map((acc, idx) => (
-                        <div key={idx} className="account-card">
-                          <div className="acc-top">
-                            <span className="bank-name">{acc.fipId.replace('setu-', '').toUpperCase()}</span>
-                            <span className="acc-type">{acc.accType}</span>
-                          </div>
-                          <div className="acc-mid">
-                            <span className="acc-num">•••• {acc.maskedAccNumber.slice(-4)}</span>
-                          </div>
-                          <div className="acc-bot">
-                            <span className="fi-type">{acc.fiType}</span>
-                            <span className="verified-badge">✓ Verified</span>
-                          </div>
+                    <div className="accounts-grid-premium">
+                          {selectedConsent.accountsLinked.map((acc, idx) => (
+                            <div key={idx} className="premium-account-card">
+                              <div className="card-background-glow"></div>
+                              <div className="card-content">
+                                <div className="card-header">
+                                  <span className="bank-logo-text">{acc.fipId.replace('setu-', '').toUpperCase()}</span>
+                                  <span className="card-type-badge">{acc.accType}</span>
+                                </div>
+                                <div className="card-chip">
+                                  <div className="chip-line"></div>
+                                  <div className="chip-line"></div>
+                                  <div className="chip-line"></div>
+                                  <div className="chip-line"></div>
+                                </div>
+                                <div className="card-number">
+                                  <span className="dots">••••</span>
+                                  <span className="dots">••••</span>
+                                  <span className="dots">••••</span>
+                                  <span className="last-four">{acc.maskedAccNumber.slice(-4)}</span>
+                                </div>
+                                <div className="card-footer">
+                                  <div className="card-info-group">
+                                    <span className="label">STATUS</span>
+                                    <span className="value verified">
+                                      <span className="check-circle">✓</span> Verified
+                                    </span>
+                                  </div>
+                                  <div className="card-info-group right">
+                                     <span className="label">TYPE</span>
+                                     <span className="value">{acc.fiType}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="no-accounts">
-                      <p>No accounts linked yet.</p>
-                    </div>
-                  )}
-                </div>
+                      ) : (
+                        <div className="no-accounts">
+                          <p>No accounts linked yet.</p>
+                        </div>
+                      )}
+                   </div>
               </div>
             </div>
           )}
@@ -400,6 +431,15 @@ const ConsentManager = () => {
                       <div className="card-top">
                         <span className={`status-dot ${consent.status?.toLowerCase()}`}></span>
                         <span className="status-text">{consent.status || 'PENDING'}</span>
+                        {consent.status !== 'REVOKED' && (
+                          <button 
+                            className="revoke-btn" 
+                            onClick={(e) => handleRevoke(e, consent.id)}
+                            title="Revoke Consent"
+                          >
+                            <Undo2 size={14} />
+                          </button>
+                        )}
                       </div>
                       <div className="card-mid">
                         <span className="vua-text">{consent.vua ? consent.vua.split('@')[0] : ''}</span>
