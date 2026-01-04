@@ -48,10 +48,10 @@ const Features = () => {
       </div>
 
       
-      <div className="absolute top-0 left-0 w-full h-full bg-[#0a0a0f] -z-20"></div>
+      <div className="absolute top-0 left-0 w-full h-full bg-[var(--bg-root)] -z-20"></div>
       
       
-      <div className="absolute inset-0 bg-linear-to-b from-[#0a0a0f] via-purple-900/5 to-[#0a0a0f] pointer-events-none"></div>
+      <div className="absolute inset-0 bg-linear-to-b from-[var(--bg-root)] via-purple-900/5 to-[var(--bg-root)] pointer-events-none"></div>
 
       
       <div className="absolute top-1/4 -left-64 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] -z-10"></div>
@@ -59,13 +59,13 @@ const Features = () => {
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-20">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight">
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[var(--text-primary)] mb-6 tracking-tight">
             Everything you need for{" "}
-            <span className="bg-linear-to-r from-purple-400 via-pink-500 to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(168,85,247,0.5)]">
+            <span className="bg-linear-to-r from-purple-400 via-pink-500 to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-300 hover:drop-shadow-[0_0_50px_rgba(168,85,247,0.8)]">
               financial clarity
             </span>
           </h2>
-          <p className="text-gray-400 text-xl max-w-3xl mx-auto leading-relaxed">
+          <p className="text-[var(--text-secondary)] text-xl max-w-3xl mx-auto leading-relaxed">
             Powerful features that transform how you understand and manage your money.
           </p>
         </div>
@@ -85,7 +85,7 @@ const Features = () => {
               <div className="absolute inset-0 bg-linear-to-r from-purple-500/20 via-cyan-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 group-active:opacity-100 blur-2xl transition-opacity duration-500 -z-10"></div>
               
               
-              <div className="relative h-full bg-[#0a0a0f] rounded-3xl p-8 md:p-10 border border-white/5 group-hover:border-transparent group-active:border-transparent transition-colors z-10 overflow-hidden">
+              <div className="relative h-full bg-[var(--bg-card)] rounded-3xl p-8 md:p-10 border border-transparent group-hover:border-transparent transition-colors z-10 overflow-hidden">
                 
            
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:24px_24px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -94,22 +94,22 @@ const Features = () => {
                 <div className="absolute inset-0 bg-linear-to-br from-purple-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                 
-                <div className="absolute -right-10 -bottom-10 w-64 h-64 text-white/5 group-hover:text-white/10 transition-colors duration-500 rotate-12 pointer-events-none">
+                <div className="absolute -right-10 -bottom-10 w-64 h-64 text-[var(--text-primary)]/5 group-hover:text-[var(--text-primary)]/10 transition-colors duration-500 rotate-12 pointer-events-none">
                     {feature.icon}
                 </div>
 
                 <div className="relative z-10 flex flex-col h-full">
-                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-8 border border-white/10 group-hover:border-purple-500/50 group-hover:bg-purple-500/10 transition-all duration-500 shadow-lg group-hover:shadow-purple-500/20">
+                    <div className="w-16 h-16 rounded-2xl bg-[var(--text-primary)]/5 flex items-center justify-center mb-8 border border-[var(--border-color)] group-hover:border-purple-500/50 group-hover:bg-purple-500/10 transition-all duration-500 shadow-lg group-hover:shadow-purple-500/20">
                       <div className="text-purple-400 group-hover:text-cyan-400 transition-colors duration-300 scale-125">
                         {feature.icon}
                       </div>
                     </div>
                     
-                    <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-linear-to-r group-hover:from-purple-400 group-hover:to-cyan-400 transition-all duration-300">
+                    <h3 className="text-2xl md:text-3xl font-bold mb-4 text-[var(--text-primary)] group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-linear-to-r group-hover:from-purple-400 group-hover:to-cyan-400 transition-all duration-300">
                       {feature.title}
                     </h3>
                     
-                    <p className="text-gray-400 text-lg leading-relaxed group-hover:text-gray-300 transition-colors max-w-md">
+                    <p className="text-[var(--text-secondary)] text-lg leading-relaxed group-hover:text-[var(--text-primary)] transition-colors max-w-md">
                       {feature.description}
                     </p>
 
