@@ -18,6 +18,7 @@ import {
   Zap,
   Sun,
   Moon,
+  Wifi,
   ArrowUpRight,
   ArrowDownLeft,
   CreditCard,
@@ -42,9 +43,8 @@ const Dashboard = () => {
   const [theme, setTheme] = useState("dark");
   const [consentId, setConsentId] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 5;
-  const { transactions, allTransactions, loading, error, fetchTransactions, fetchTransactionsViaSession, total, paginate, rawResponse, notification, loadingMessage } = useTransactionsByConsentId();
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const pageSize = 12;
+  const { transactions, allTransactions, loading, error, fetchTransactionsViaSession, total, paginate, rawResponse, notification, loadingMessage } = useTransactionsByConsentId();
   const [activeConsents, setActiveConsents] = useState([]);
 
   useEffect(() => {
@@ -58,20 +58,7 @@ const Dashboard = () => {
   const handleConsentClick = async (id) => {
     setConsentId(id);
     setPage(1);
-    setLastUpdated(null);
     await fetchTransactionsViaSession(id, 1, pageSize);
-    setLastUpdated(new Date());
-  };
-
-  const handleFetch = async () => {
-    setPage(1);
-    if (!consentId) {
-      setLastUpdated(null);
-      fetchTransactions(consentId, 1, pageSize);
-      return;
-    }
-    await fetchTransactions(consentId, 1, pageSize);
-    setLastUpdated(new Date());
   };
 
   const handlePageChange = (newPage) => {
@@ -107,26 +94,6 @@ const Dashboard = () => {
     const numeric = Number(amount) || 0;
     return `${currencySymbol}${numeric.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
-
-  const transactionSummary = useMemo(() => {
-    if (!allTransactions || allTransactions.length === 0) {
-      return { totalVolume: 0, avgTicket: 0, successRate: 0, totalCount: 0 };
-    }
-
-    const amounts = allTransactions.map((tx) => parseAmount(tx.amount || tx.value || tx.price || tx.total || 0)).filter((n) => Number.isFinite(n));
-    const totalVolume = amounts.reduce((sum, val) => sum + Math.abs(val), 0);
-    const totalCount = allTransactions.length;
-
-    const successCount = allTransactions.filter((tx) => {
-      const status = String(tx.status || tx.state || "").toLowerCase();
-      return status.includes("success") || status.includes("confirm") || status.includes("complete") || status.includes("posted") || status === "ok";
-    }).length;
-
-    const avgTicket = totalCount ? totalVolume / totalCount : 0;
-    const successRate = totalCount ? Math.round((successCount / totalCount) * 100) : 0;
-
-    return { totalVolume, avgTicket, successRate, totalCount };
-  }, [allTransactions]);
 
   const renderPagination = () => {
     const totalPages = Math.ceil(total / pageSize);
@@ -363,7 +330,7 @@ const Dashboard = () => {
       <aside className="sidebar">
         <div className="logo">
           <div className="logo-icon-box"><Zap size={20} fill="currentColor" /></div>
-          <span className="logo-text">FinPilot</span>
+          <span className="logo-text">VittaManthan</span>
         </div>
         
         <div className="nav-section-label">MENU</div>
@@ -448,22 +415,42 @@ const Dashboard = () => {
                 <div className="active-consents-carousel">
                   <h3>Active Consents</h3>
                   <div className="carousel-track">
-                    {activeConsents.map((consent) => (
-                      <div 
-                        key={consent.id} 
-                        className={`carousel-card ${consentId === consent.id ? 'selected' : ''}`}
-                        onClick={() => handleConsentClick(consent.id)}
-                      >
-                        <div className="carousel-card-header">
-                          <span className="status-dot active"></span>
-                          <span className="carousel-id">{consent.id.slice(0, 8)}...</span>
+                    {activeConsents.map((consent, index) => {
+                      // Format ID into groups of 4 for visual appeal
+                      // Assuming ID is at least 16 chars, or we pad it
+                      const displayId = (consent.id || "").padEnd(16, "0").slice(0, 16).match(/.{1,4}/g)?.join(" ") || "0000 0000 0000 0000";
+                      const gradientClass = `card-gradient-${index % 5}`;
+
+                      return (
+                        <div 
+                          key={consent.id} 
+                          className={`carousel-card ${gradientClass} ${consentId === consent.id ? 'selected' : ''}`}
+                          onClick={() => handleConsentClick(consent.id)}
+                        >
+                          <div className="card-top">
+                            <div className="card-chip"></div>
+                            <div className="contactless-icon">
+                              <Wifi size={24} color="#fff" />
+                            </div>
+                          </div>
+                          
+                          <div className="card-middle">
+                            <div className="card-number">{displayId}</div>
+                          </div>
+
+                          <div className="card-footer">
+                            <div className="card-info-group">
+                              <span className="card-label">CONSENT HOLDER</span>
+                              <span className="card-value">{consent.vua ? consent.vua.split('@')[0] : 'Unknown'}</span>
+                            </div>
+                            <div className="card-info-group">
+                              <span className="card-label">CREATED</span>
+                              <span className="card-value">{new Date(consent.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="carousel-card-body">
-                          <span className="carousel-vua">{consent.vua ? consent.vua.split('@')[0] : 'Unknown'}</span>
-                          <span className="carousel-date">{new Date(consent.createdAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -494,11 +481,15 @@ const Dashboard = () => {
                 {!loading && !error && transactions.length > 0 && (
                   <>
                     <div className="transactions-table-header">
-                      <div className="th-item">TRANSACTION</div>
-                      <div className="th-item">AMOUNT</div>
-                      <div className="th-item">DATE</div>
-                      <div className="th-item">STATUS</div>
-                      <div className="th-item">ACTION</div>
+                      <div className="th-item"><div className="custom-checkbox"></div></div>
+                      <div className="th-item">TRANSACTION ID</div>
+                      <div className="th-item">CUSTOMER</div>
+                      <div className="th-item">TOTAL</div>
+                      <div className="th-item">TYPE</div>
+                      <div className="th-item">ORDER DATE</div>
+                      <div className="th-item">PAYMENT</div>
+                      <div className="th-item">PAYMENT METHOD</div>
+                      <div className="th-item">TRACKING NUMBER</div>
                     </div>
                     {transactions.map((tx, idx) => {
                        // Use account number if available, otherwise fallback to ID or narration
@@ -520,29 +511,37 @@ const Dashboard = () => {
 
                        return (
                         <div key={idx} className={`transaction-card ${expandedIdx === idx ? 'expanded' : ''}`}>
-                          <div className="transaction-row">
-                            <div className="td-item td-transaction">
-                              <div className="t-icon-box" style={{ background: iconBg, color: iconColor, padding: '8px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Icon size={18} />
-                              </div>
-                              <div className="t-copy">
-                                <div className="t-head"><span className="t-title">{String(title)}</span></div>
-                                <div className="t-sub" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{tx.id || tx.txnId || 'Ref: ' + (idx + 1)}</div>
-                              </div>
+                          <div className="transaction-row" onClick={() => setExpandedIdx(expandedIdx === idx ? null : idx)} style={{cursor: 'pointer'}}>
+                            <div className="td-item"><div className="custom-checkbox"></div></div>
+                            <div className="td-item monospace text-secondary">
+                              <span className="truncate-text">{tx.id ? tx.id.slice(0, 8) : (tx.txnId ? tx.txnId.slice(0, 8) : `ORD-${idx + 1000}`)}</span>
                             </div>
-                            <div className="td-item td-amount" style={{color: amountColor, fontWeight: '600'}}>
+                            <div className="td-item font-medium text-primary">
+                              <span className="truncate-text">{String(title)}</span>
+                            </div>
+                            <div className="td-item font-semibold" style={{color: amountColor}}>
                               {amountSign}{formatCurrency(amountVal, currency)}
                             </div>
-                            <div className="td-item td-date">{txDate ? new Date(txDate).toLocaleDateString() : 'Today'}</div>
-                            <div className="td-item td-status">
-                              <span className={`status-badge ${status.toLowerCase() === 'success' ? 'success' : 'pending'}`} style={{ textTransform: 'capitalize' }}>
+                            <div className="td-item" style={{color: isDebit ? '#ef4444' : '#22c55e', fontWeight: 600, textTransform: 'capitalize'}}>
+                              {isDebit ? 'Debit' : 'Credit'}
+                            </div>
+                            <div className="td-item">{txDate ? new Date(txDate).toLocaleDateString() : 'Today'}</div>
+                            <div className="td-item">
+                              <span className={`status-badge ${status.toLowerCase() === 'success' ? 'success' : 'pending'}`}>
                                 {status}
                               </span>
                             </div>
-                            <div className="td-item td-action">
-                              <button className="details-btn" onClick={() => setExpandedIdx(expandedIdx === idx ? null : idx)}>
-                                {expandedIdx === idx ? 'Close' : 'Details'}
-                              </button>
+                            <div className="td-item">
+                              <div className="payment-method">
+                                <div className="payment-icon"><CreditCard size={10} /></div>
+                                <span>{tx.mode || 'Card'}</span>
+                              </div>
+                            </div>
+                            <div className="td-item">
+                              <div className="tracking-number">
+                                <span className="tracking-icon">📦</span>
+                                {tx.reference ? tx.reference.slice(0, 12) : '1Z999AA...'}
+                              </div>
                             </div>
                           </div>
                           {expandedIdx === idx && (

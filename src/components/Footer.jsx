@@ -5,7 +5,7 @@ const Footer = () => {
         <div className="grid md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <span className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-cyan-400 bg-clip-text text-transparent">
-              LiveReconAI
+              VittaManthan
             </span>
             <p className="text-gray-400 mt-4 max-w-md">
               Your AI-powered finance copilot. Turn raw financial data into clear, 
@@ -36,7 +36,7 @@ const Footer = () => {
         
         <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-500 text-sm">
-            © 2024 LiveReconAI. Built with ❤️ by Prabal Pratap Singh
+            © 2024 VittaManthan. Built with ❤️ by Prabal Pratap Singh
           </p>
           <div className="flex items-center gap-4 mt-4 md:mt-0">
             <a href="https://github.com/prabal864" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
