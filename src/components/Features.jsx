@@ -85,7 +85,7 @@ const Features = () => {
               <div className="absolute inset-0 bg-linear-to-r from-purple-500/20 via-cyan-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 group-active:opacity-100 blur-2xl transition-opacity duration-500 -z-10"></div>
               
               
-              <div className="relative h-full bg-[var(--bg-card)] rounded-3xl p-8 md:p-10 border border-transparent group-hover:border-transparent transition-colors z-10 overflow-hidden">
+              <div className="relative h-full bg-[#050507] rounded-3xl p-8 md:p-10 border border-transparent group-hover:border-transparent transition-colors z-10 overflow-hidden">
                 
            
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:24px_24px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
