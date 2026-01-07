@@ -1,5 +1,47 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+
+// Simple SVG Icons
+const UserIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+  </svg>
+);
+
+const MailIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+  </svg>
+);
+
+const LockIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+  </svg>
+);
+
+const PhoneIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+    </svg>
+);
+
+const EyeIcon = ({ visible, onClick }) => (
+  <button type="button" onClick={onClick} className="focus:outline-none">
+    {visible ? (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+      </svg>
+    ) : (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+         <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+         <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.064 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+      </svg>
+    )}
+  </button>
+);
 
 const Signup = ({ setAuthenticated }) => {
   const [username, setUsername] = useState("");
@@ -9,6 +51,7 @@ const Signup = ({ setAuthenticated }) => {
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -27,6 +70,12 @@ const Signup = ({ setAuthenticated }) => {
         }),
       });
       if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("refreshToken", data.refreshToken);
+        localStorage.setItem("userId", data.userId);
+        localStorage.setItem("username", data.username);
+        
         setAuthenticated(true);
         navigate("/dashboard");
       } else {
@@ -38,181 +87,266 @@ const Signup = ({ setAuthenticated }) => {
   };
 
   return (
-    <div className="signup-container" style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(120deg,#181825 60%,#ff6bcb 100%)',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        background: 'rgba(30,30,50,0.95)',
-        borderRadius: '24px',
-        boxShadow: '0 8px 40px #ff6bcb33',
-        padding: '48px 36px',
-        minWidth: 340,
-        maxWidth: 380,
-        width: '100%',
-        position: 'relative',
-        zIndex: 2,
-        border: '1.5px solid #ff6bcb44',
-        backdropFilter: 'blur(8px)'
-      }}>
-        <h2 style={{
-          background: 'linear-gradient(90deg,#a259ff,#ff6bcb)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          fontWeight: 800,
-          fontSize: '2rem',
-          marginBottom: 32,
-          textAlign: 'center',
-          letterSpacing: '-1px',
-        }}>Sign Up</h2>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <input
-            type="text"
-            placeholder="First Name"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            style={{
-              padding: '14px',
-              borderRadius: '12px',
-              border: 'none',
-              background: '#23233a',
-              color: '#fff',
-              fontSize: '1rem',
-              marginBottom: 8,
-              outline: 'none',
-              boxShadow: '0 2px 8px #a259ff11',
-            }}
-          />
-          <input
-            type="text"
-            placeholder="Last Name"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            style={{
-              padding: '14px',
-              borderRadius: '12px',
-              border: 'none',
-              background: '#23233a',
-              color: '#fff',
-              fontSize: '1rem',
-              marginBottom: 8,
-              outline: 'none',
-              boxShadow: '0 2px 8px #a259ff11',
-            }}
-          />
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={{
-              padding: '14px',
-              borderRadius: '12px',
-              border: 'none',
-              background: '#23233a',
-              color: '#fff',
-              fontSize: '1rem',
-              marginBottom: 8,
-              outline: 'none',
-              boxShadow: '0 2px 8px #a259ff11',
-            }}
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              padding: '14px',
-              borderRadius: '12px',
-              border: 'none',
-              background: '#23233a',
-              color: '#fff',
-              fontSize: '1rem',
-              marginBottom: 8,
-              outline: 'none',
-              boxShadow: '0 2px 8px #a259ff11',
-            }}
-          />
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            style={{
-              padding: '14px',
-              borderRadius: '12px',
-              border: 'none',
-              background: '#23233a',
-              color: '#fff',
-              fontSize: '1rem',
-              marginBottom: 8,
-              outline: 'none',
-              boxShadow: '0 2px 8px #a259ff11',
-            }}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{
-              padding: '14px',
-              borderRadius: '12px',
-              border: 'none',
-              background: '#23233a',
-              color: '#fff',
-              fontSize: '1rem',
-              marginBottom: 8,
-              outline: 'none',
-              boxShadow: '0 2px 8px #a259ff11',
-            }}
-          />
-          <button type="submit" style={{
-            background: 'linear-gradient(90deg,#a259ff,#ff6bcb)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '999px',
-            padding: '14px 0',
-            fontWeight: 700,
-            fontSize: '1.1rem',
-            marginTop: 8,
-            boxShadow: '0 2px 16px #ff6bcb33',
-            cursor: 'pointer',
-            transition: 'background 0.2s',
-            outline: 'none',
-          }}>Sign Up</button>
-          {error && <div style={{ color: '#ff6bcb', marginTop: 8, textAlign: 'center', fontWeight: 500 }}>{error}</div>}
-        </form>
+    <div className="min-h-screen flex bg-white text-gray-900 font-sans">
+      {/* Left Column: Visual/Promo - Hidden on mobile, visible on lg screens */}
+      <div className="hidden lg:flex w-1/2 bg-gray-50 flex-col justify-center items-center p-12 relative overflow-hidden">
+        <div className="relative z-10 text-center w-full max-w-md">
+          <h1 className="text-4xl font-bold mb-4 text-gray-900">Secure & Reliable</h1>
+          <p className="text-gray-500 text-lg mb-12">Download the app now from google play store or App store</p>
+          
+          {/* Mock Phone UI */}
+          <div className="relative w-[320px] h-[640px] bg-white border-[8px] border-gray-900 rounded-[3rem] shadow-2xl mx-auto overflow-hidden flex flex-col font-sans select-none">
+             {/* Dynamic Island / Notch */}
+             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-32 h-8 bg-black rounded-full z-30 flex justify-center items-center">
+                <div className="w-20 h-4 rounded-full bg-gray-800/50"></div>
+             </div>
+
+             {/* Screen Content */}
+             <div className="w-full h-full bg-gray-50 pt-14 px-6 flex flex-col">
+                {/* Header */}
+                <div className="flex justify-between items-end mb-8">
+                   <div className="flex flex-col text-left">
+                      <span className="text-xs font-semibold text-gray-500 mb-1">9:41</span>
+                      <span className="text-lg font-bold text-gray-900 leading-tight">Welcome, Member!</span>
+                   </div>
+                   <div className="flex gap-3 text-gray-800">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                   </div>
+                </div>
+
+                {/* Credit Card - Floating Effect */}
+                <div className="relative w-[115%] -ml-[7.5%] mb-8 z-20 group perspective">
+                    <div className="w-full bg-black text-white rounded-2xl p-6 shadow-2xl relative overflow-hidden transform transition-transform duration-500 hover:scale-105">
+                         {/* Card Background Elements */}
+                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                         
+                         <div className="flex justify-between items-start mb-8">
+                            <div className="flex flex-col gap-1">
+                               {/* Chip */}
+                               <div className="w-10 h-7 border border-gray-600 rounded-md flex items-center justify-center bg-gray-800/50">
+                                   <div className="w-8 h-[1px] bg-gray-600 rounded-full"></div>
+                               </div>
+                               <svg className="w-5 h-5 text-gray-500 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
+                            <div className="text-white/80">
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /></svg>
+                            </div>
+                         </div>
+
+                         <div className="mt-8">
+                             <div className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-1">Cardholder Name</div>
+                             <div className="flex justify-between items-center">
+                                 <div className="text-lg font-bold tracking-wide">{firstName || "Steve Harrington"}</div>
+                                 <div className="flex -space-x-2">
+                                     <div className="w-8 h-8 rounded-full bg-red-500/90 z-10"></div>
+                                     <div className="w-8 h-8 rounded-full bg-yellow-400/90"></div>
+                                 </div>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+
+                {/* Assets List */}
+                <div className="flex-1">
+                    <div className="flex justify-between items-center mb-4 px-1">
+                        <span className="font-bold text-gray-900">All Assets</span>
+                        <div className="flex items-center text-xs font-semibold text-gray-500 bg-gray-200/50 px-2 py-1 rounded-lg gap-1">
+                            Tradable <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        {/* Bitcoin Item */}
+                        <div className="bg-white p-3 rounded-2xl flex items-center justify-between shadow-sm border border-gray-100">
+                             <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center text-orange-500 font-bold text-lg">₿</div>
+                                <div>
+                                   <div className="font-bold text-sm text-gray-900">Bitcoin <span className="text-gray-400 font-normal">BTC</span></div>
+                                   <div className="text-xs text-gray-500">0.0739 - $42,158.85</div>
+                                </div>
+                             </div>
+                             <div className="text-right">
+                                <div className="text-green-500 text-xs font-bold">+2.48%</div>
+                                <div className="font-bold text-sm text-gray-900">+$128.73</div>
+                             </div>
+                        </div>
+                        
+                        {/* Ethereum Item */}
+                        <div className="bg-white p-3 rounded-2xl flex items-center justify-between shadow-sm border border-gray-100">
+                             <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 font-bold text-lg">♦</div>
+                                <div>
+                                   <div className="font-bold text-sm text-gray-900">Ethereum <span className="text-gray-400 font-normal">ETH</span></div>
+                                   <div className="text-xs text-gray-500">0.0739 - $2,468.70</div>
+                                </div>
+                             </div>
+                             <div className="text-right">
+                                <div className="text-green-500 text-xs font-bold">+17.22%</div>
+                                <div className="font-bold text-sm text-gray-900">+$764.85</div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+             </div>
+          </div>
+        </div>
       </div>
-      {/* Glow background */}
-      <div style={{
-        position: 'absolute',
-        left: '-120px',
-        top: '-120px',
-        width: '340px',
-        height: '340px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle,#a259ff55 0%,transparent 70%)',
-        zIndex: 1,
-        filter: 'blur(16px)'
-      }} />
-      <div style={{
-        position: 'absolute',
-        right: '-120px',
-        bottom: '-120px',
-        width: '340px',
-        height: '340px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle,#ff6bcb55 0%,transparent 70%)',
-        zIndex: 1,
-        filter: 'blur(16px)'
-      }} />
+
+      {/* Right Column: Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 lg:px-24 py-12">
+        <div className="max-w-md w-full mx-auto">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold mb-2">Sign Up</h2>
+            <p className="text-gray-500">Start managing your finance faster & seamlessly</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* First & Last Name */}
+            <div className="flex gap-4">
+               <div className="w-1/2">
+                 <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                 <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                       <UserIcon />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="First Name"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-400"
+                    />
+                 </div>
+               </div>
+               <div className="w-1/2">
+                 <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                       <UserIcon />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Last Name"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                         className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-400"
+                    />
+                 </div>
+               </div>
+            </div>
+
+            {/* Username */}
+            <div>
+               <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+               <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                     <span className="text-gray-400 font-bold">@</span>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-400"
+                  />
+               </div>
+            </div>
+
+             {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+              <div className="relative">
+                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <MailIcon />
+                 </div>
+                 <input
+                    type="email"
+                    placeholder="Type your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-400"
+                 />
+              </div>
+            </div>
+             
+             {/* Phone */}
+             <div>
+               <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+               <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                     <PhoneIcon />
+                  </div>
+                  <input
+                    type="tel"
+                    placeholder="Phone Number"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-400"
+                  />
+               </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <div className="relative">
+                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <LockIcon />
+                 </div>
+                 <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-400"
+                 />
+                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <EyeIcon visible={showPassword} onClick={() => setShowPassword(!showPassword)} />
+                 </div>
+              </div>
+            </div>
+            
+            {/* Terms Checkbox */}
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="terms"
+                  type="checkbox"
+                  required
+                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 bg-gray-50 bg-white"
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="terms" className="font-medium text-gray-700">I accept the terms & conditions</label>
+                <p className="text-gray-500 text-xs">Read privacy & policy and legal agreements.</p>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button 
+                type="submit" 
+                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors"
+            >
+              Sign Up
+            </button>
+            
+            {/* Error Message */}
+            {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+
+            {/* Sign In Link */}
+            <div className="mt-8 text-center space-y-4">
+                <p className="text-sm text-gray-600">
+                    Already have a account? <Link to="/login" className="font-medium text-gray-900 hover:text-black hover:underline">Sign in</Link>
+                </p>
+                 <Link to="/login" className="w-full flex justify-center py-4 px-4 border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    Sign in
+                 </Link>
+            </div>
+
+          </form>
+        </div>
+      </div>
     </div>
   );
 };
