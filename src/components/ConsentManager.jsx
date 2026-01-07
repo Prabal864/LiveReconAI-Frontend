@@ -20,6 +20,55 @@ const ConsentManager = () => {
   const [revokeModal, setRevokeModal] = useState({ show: false, consentId: null });
   const [isRevoking, setIsRevoking] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(null);
+
+  // Timer logic for session expiry
+  useEffect(() => {
+    if (token) {
+      const SESSION_DURATION = 5 * 60 * 1000; // 5 minutes
+      
+      let expiry = localStorage.getItem('setu_session_expiry');
+      if (!expiry) {
+        expiry = Date.now() + SESSION_DURATION;
+        localStorage.setItem('setu_session_expiry', expiry);
+      } else {
+        // If expiry is in the past, reset it (or logout immediately)
+        if (parseInt(expiry) < Date.now()) {
+             logout();
+             localStorage.removeItem('setu_session_expiry');
+             return;
+        }
+      }
+
+      const updateTimer = () => {
+        const now = Date.now();
+        const diff = parseInt(expiry) - now;
+        
+        if (diff <= 0) {
+          setTimeLeft(0);
+          logout();
+          localStorage.removeItem('setu_session_expiry');
+        } else {
+          setTimeLeft(Math.ceil(diff / 1000));
+        }
+      };
+
+      updateTimer(); // Initial call
+      const timerId = setInterval(updateTimer, 1000);
+
+      return () => clearInterval(timerId);
+    } else {
+      setTimeLeft(null);
+      localStorage.removeItem('setu_session_expiry');
+    }
+  }, [token, logout]);
+
+  const formatTime = (seconds) => {
+    if (seconds === null) return '';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
   
   // Persist consents to localStorage whenever they change
   useEffect(() => {
@@ -216,7 +265,7 @@ const ConsentManager = () => {
               fontWeight: '600'
             }}>
               <span className="dot" style={{ width: '6px', height: '6px', background: 'var(--success-green)', borderRadius: '50%', boxShadow: '0 0 6px var(--success-green)' }}></span>
-              <span>Session Active</span>
+              <span>Session Active {timeLeft !== null && `(${formatTime(timeLeft)})`}</span>
             </div>
           )}
           {token && (
