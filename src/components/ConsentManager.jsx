@@ -70,18 +70,70 @@ const ConsentManager = () => {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const getRandomGradient = (id) => {
+  const getCardStyle = (id) => {
+      // Functional hash for consistent randomness
+      let hash = 0;
+      for (let i = 0; i < id.length; i++) {
+        hash = id.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      hash = Math.abs(hash);
+
+      const angle = (hash % 160) + 10; // 10deg to 170deg
+      
       const gradients = [
-          'linear-gradient(135deg, #1a1c2c 0%, #4a192c 100%)', // Dark Red/Purple
-          'linear-gradient(135deg, #0f172a 0%, #334155 100%)', // Slate
-          'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', // Indigo deeply
-          'linear-gradient(135deg, #1c1917 0%, #57534e 100%)', // Stone
-          'linear-gradient(135deg, #14532d 0%, #064e3b 100%)', // Deep Green
-          'linear-gradient(135deg, #3b0764 0%, #6b21a8 100%)', // Deep Purple
+          // 1. Obsidian (The Classic - matte black)
+          `linear-gradient(${angle}deg, #09090b 0%, #27272a 100%)`,
+          // 2. Midnight Navy (Deep elegant blue)
+          `linear-gradient(${angle}deg, #020617 0%, #1e3a8a 100%)`, 
+          // 3. Royal Amethyst (Dark purple)
+          `linear-gradient(${angle}deg, #2e1065 0%, #581c87 100%)`,
+          // 4. Forest Deep (Dark emerald)
+          `linear-gradient(${angle}deg, #022c22 0%, #115e59 100%)`,
+          // 5. Charcoal Bronze (Metallics)
+          `linear-gradient(${angle}deg, #1c1917 0%, #57534e 100%)`,
+          // 6. Deep Crimson (Rich Red)
+          `linear-gradient(${angle}deg, #450a0a 0%, #991b1b 100%)`, 
+          // 7. Night Sky (Dark Slate)
+          `linear-gradient(${angle}deg, #0f172a 0%, #334155 100%)`
       ];
-      // Use ID char code sum to deterministically pick a gradient
-      const sum = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      return gradients[sum % gradients.length];
+
+      const patterns = [
+        'pattern-mesh', 
+        'pattern-waves', 
+        'pattern-geo', 
+        'pattern-circles', 
+        'pattern-lines',
+        'pattern-hex'
+      ];
+      
+      const pattern = patterns[hash % patterns.length];
+      
+      // Variable pattern opacity (0.15 to 0.4) for depth variety
+      const op = 0.15 + ((hash % 25) / 100);
+      
+      // Variable pattern size (20px to 60px) for texture variety
+      const sz = 20 + (hash % 40);
+      
+      // Variable rotation angle for lines (0 to 180)
+      const deg = (hash % 180);
+
+      // 40% chance of "Pure Black" aesthetic (Users favorite)
+      const isBlack = (hash % 10) < 4;
+      const bg = isBlack 
+         ? `linear-gradient(${angle}deg, #000000 0%, #1a1a1a 100%)` 
+         : gradients[hash % gradients.length];
+
+      return {
+          background: bg,
+          pattern: pattern,
+          vars: {
+             '--op': op,
+             '--sz': `${sz}px`,
+             '--deg': `${deg}deg`,
+             '--pos-x': `${hash % 100}%`,
+             '--pos-y': `${(hash >> 2) % 100}%`
+          }
+      };
   };
   
   // Persist consents to localStorage whenever they change
@@ -461,11 +513,8 @@ const ConsentManager = () => {
                                   <span className="bank-logo-text">{acc.fipId.replace('setu-', '').toUpperCase()}</span>
                                   <span className="card-type-badge">{acc.accType}</span>
                                 </div>
-                                <div className="card-chip">
-                                  <div className="chip-line"></div>
-                                  <div className="chip-line"></div>
-                                  <div className="chip-line"></div>
-                                  <div className="chip-line"></div>
+                                <div className="card-chip" style={{ display: 'none' }}>
+                                  {/* Chip Removed for Premium Look */}
                                 </div>
                                 <div className="card-number">
                                   <span className="dots">••••</span>
@@ -511,78 +560,78 @@ const ConsentManager = () => {
                 </div>
               ) : (
                 <div className="consents-grid">
-                  {consents.map((consent, idx) => (
-                    <div 
-                        key={idx} 
-                        className="consent-card-premium" 
-                        onClick={() => setSelectedConsent(consent)}
-                        style={{ background: getRandomGradient(consent.id) }}
-                    >
-                      {/* Glass Shine Effect */}
-                      <div className="card-shine"></div>
-                      
-                      {/* Top Row: Provider & Status */}
-                      <div className="card-top-row">
-                          <span className="provider-logo">SETU<span className="font-light">CONSENT</span></span>
-                          <div className="status-badge-pill">
-                              <span className={`status-dot-pulse ${consent.status?.toLowerCase()}`}></span>
-                              <span className="status-label">{consent.status}</span>
+                  {consents.map((consent, idx) => {
+                    const styleObj = getCardStyle(consent.id);
+                    return (
+                        <div 
+                            key={idx} 
+                            className={`consent-card-premium ${styleObj.pattern}`} 
+                            onClick={() => setSelectedConsent(consent)}
+                            style={{ 
+                                background: styleObj.background,
+                                ...styleObj.vars
+                            }}
+                        >
+                          {/* Glass Shine Effect */}
+                          <div className="card-shine"></div>
+                          
+                          {/* Top Row: Provider & Status */}
+                          <div className="card-top-row">
+                              <span className="provider-logo">SETU<span className="font-light">CONSENT</span></span>
+                              <div className="status-badge-pill">
+                                  <span className={`status-dot-pulse ${consent.status?.toLowerCase()}`}></span>
+                                  <span className="status-label">{consent.status}</span>
+                              </div>
                           </div>
-                      </div>
 
-                      {/* Chip Row */}
-                      <div className="card-chip-row">
-                          <div className="sim-chip">
-                              <div className="chip-line"></div>
-                              <div className="chip-line"></div>
-                              <div className="chip-line"></div>
-                              <div className="chip-line"></div>
+                          {/* Chip Row */}
+                          <div className="card-chip-row">
+                              <div className="contactless-symbol" style={{ marginLeft: 'auto' }}>
+                                  <svg viewBox="0 0 24 24" fill="none" width="24" height="24">
+                                      <path d="M12 10.9c-.6.6-1.5.6-2.1 0-.6-.6-.6-1.5 0-2.1.6-.6 1.5-.6 2.1 0 .6.6.6 1.5 0 2.1z" fill="rgba(255,255,255,0.8)" />
+                                      <path d="M14.8 13.7c1.4-1.4 1.4-3.7 0-5.1-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0 2.2 2.2 2.2 5.7 0 7.9-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4z" fill="rgba(255,255,255,0.6)" />
+                                      <path d="M17.6 16.5c2.9-2.9 2.9-7.7 0-10.6-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0 3.7 3.7 3.7 9.6 0 13.4-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4z" fill="rgba(255,255,255,0.4)" />
+                                  </svg>
+                              </div>
                           </div>
-                          <div className="contactless-symbol">
-                              <svg viewBox="0 0 24 24" fill="none" width="24" height="24">
-                                  <path d="M12 10.9c-.6.6-1.5.6-2.1 0-.6-.6-.6-1.5 0-2.1.6-.6 1.5-.6 2.1 0 .6.6.6 1.5 0 2.1z" fill="rgba(255,255,255,0.8)" />
-                                  <path d="M14.8 13.7c1.4-1.4 1.4-3.7 0-5.1-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0 2.2 2.2 2.2 5.7 0 7.9-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4z" fill="rgba(255,255,255,0.6)" />
-                                  <path d="M17.6 16.5c2.9-2.9 2.9-7.7 0-10.6-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0 3.7 3.7 3.7 9.6 0 13.4-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4z" fill="rgba(255,255,255,0.4)" />
-                              </svg>
-                          </div>
-                      </div>
 
-                      {/* Card Number (Consent ID) */}
-                      <div className="card-number-large">
-                          {consent.id ? (consent.id.slice(0,4) + '  ' + consent.id.slice(4,8) + '  ' + consent.id.slice(8,12) + '  ' + consent.id.slice(12,16)) : '0000  0000  0000  0000'}
-                      </div>
+                          {/* Card Number (Consent ID) */}
+                          <div className="card-number-large">
+                              {consent.id ? (consent.id.slice(0,4) + '  ' + consent.id.slice(4,8) + '  ' + consent.id.slice(8,12) + '  ' + consent.id.slice(12,16)) : '0000  0000  0000  0000'}
+                          </div>
 
-                      {/* Bottom Details */}
-                      <div className="card-bottom-row">
-                          <div className="card-info-col">
-                              <span className="info-label">AUTHORIZED FOR</span>
-                              <span className="info-value truncate w-32" title={consent.vua}>{consent.vua ? consent.vua.split('@')[0].toUpperCase() : 'USER'}</span>
+                          {/* Bottom Details */}
+                          <div className="card-bottom-row">
+                              <div className="card-info-col">
+                                  <span className="info-label">AUTHORIZED FOR</span>
+                                  <span className="info-value truncate w-32" title={consent.vua}>{consent.vua ? consent.vua.split('@')[0].toUpperCase() : 'USER'}</span>
+                              </div>
+                              <div className="card-info-col">
+                                  <span className="info-label">VALID THRU</span>
+                                  <span className="info-value">
+                                      {consent.dataRange?.to 
+                                        ? new Date(consent.dataRange.to).toLocaleDateString(undefined, { month: '2-digit', year: '2-digit' }) 
+                                        : '12/99'}
+                                  </span>
+                              </div>
+                              {/* Revoke visual button (small) */}
+                              {consent.status !== 'REVOKED' && (
+                                 <button 
+                                    className="card-revoke-icon"
+                                    onClick={(e) => handleRevoke(e, consent.id)}
+                                    title="Revoke"
+                                 >
+                                    <LogOut size={16} />
+                                 </button>
+                              )}
+                              <div className="card-logo-circles">
+                                  <div className="circle red"></div>
+                                  <div className="circle yellow"></div>
+                              </div>
                           </div>
-                          <div className="card-info-col">
-                              <span className="info-label">VALID THRU</span>
-                              <span className="info-value">
-                                  {consent.dataRange?.to 
-                                    ? new Date(consent.dataRange.to).toLocaleDateString(undefined, { month: '2-digit', year: '2-digit' }) 
-                                    : '12/99'}
-                              </span>
-                          </div>
-                           {/* Revoke visual button (small) */}
-                          {consent.status !== 'REVOKED' && (
-                             <button 
-                                className="card-revoke-icon"
-                                onClick={(e) => handleRevoke(e, consent.id)}
-                                title="Revoke"
-                             >
-                                <LogOut size={16} />
-                             </button>
-                          )}
-                          <div className="card-logo-circles">
-                              <div className="circle red"></div>
-                              <div className="circle yellow"></div>
-                          </div>
-                      </div>
-                    </div>
-                  ))}
+                        </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
