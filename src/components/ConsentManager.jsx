@@ -81,20 +81,26 @@ const ConsentManager = () => {
       const angle = (hash % 160) + 10; // 10deg to 170deg
       
       const gradients = [
-          // 1. Obsidian (The Classic - matte black)
-          `linear-gradient(${angle}deg, #09090b 0%, #27272a 100%)`,
-          // 2. Midnight Navy (Deep elegant blue)
-          `linear-gradient(${angle}deg, #020617 0%, #1e3a8a 100%)`, 
-          // 3. Royal Amethyst (Dark purple)
-          `linear-gradient(${angle}deg, #2e1065 0%, #581c87 100%)`,
-          // 4. Forest Deep (Dark emerald)
-          `linear-gradient(${angle}deg, #022c22 0%, #115e59 100%)`,
-          // 5. Charcoal Bronze (Metallics)
-          `linear-gradient(${angle}deg, #1c1917 0%, #57534e 100%)`,
-          // 6. Deep Crimson (Rich Red)
-          `linear-gradient(${angle}deg, #450a0a 0%, #991b1b 100%)`, 
-          // 7. Night Sky (Dark Slate)
-          `linear-gradient(${angle}deg, #0f172a 0%, #334155 100%)`
+          // 1. Midnight Fintech (Deep Navy & Teal Glow)
+          'radial-gradient(circle at 100% 0%, rgba(45, 212, 191, 0.15) 0%, transparent 50%), linear-gradient(135deg, #020617 0%, #0f172a 50%, #172554 100%)',
+          
+          // 2. Cyber Void (Deep Black & Neon Purple)
+          'radial-gradient(circle at 0% 0%, rgba(124, 58, 237, 0.15) 0%, transparent 50%), radial-gradient(circle at 100% 100%, rgba(219, 39, 119, 0.15) 0%, transparent 50%), linear-gradient(180deg, #09090b 0%, #18181b 100%)',
+          
+          // 3. Obsidian Gold (Premium Dark & Gold Sheen)
+          'linear-gradient(120deg, transparent 30%, rgba(234, 179, 8, 0.08) 45%, rgba(234, 179, 8, 0.02) 50%, transparent 60%), linear-gradient(180deg, #1c1917 0%, #0c0a09 100%)',
+          
+          // 4. Aurora Dark (Slate with Cyan/Violet)
+          'radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 50%), radial-gradient(circle at 15% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 50%), linear-gradient(180deg, #0f172a 0%, #020617 100%)',
+          
+          // 5. Verdant Deep (Emerald & Forest)
+          'radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.15) 0%, transparent 60%), linear-gradient(135deg, #022c22 0%, #064e3b 100%)',
+          
+          // 6. Crimson Night (Rich Red & Dark Carbon)
+          'radial-gradient(circle at 50% 120%, rgba(220, 38, 38, 0.15) 0%, transparent 60%), linear-gradient(to bottom, #18181b 0%, #1a0505 100%)',
+
+          // 7. Royal Velvet (Deep Mauve/Black)
+          'linear-gradient(to top right, #2e1065 0%, #000000 60%, #4c1d95 100%)'
       ];
 
       const patterns = [
@@ -108,19 +114,18 @@ const ConsentManager = () => {
       
       const pattern = patterns[hash % patterns.length];
       
-      // Variable pattern opacity (0.15 to 0.4) for depth variety
-      const op = 0.15 + ((hash % 25) / 100);
+      // Variable pattern opacity (0.1 to 0.3) - lowered for subtle look
+      const op = 0.08 + ((hash % 20) / 100);
       
-      // Variable pattern size (20px to 60px) for texture variety
+      // Variable pattern size (20px to 60px)
       const sz = 20 + (hash % 40);
       
-      // Variable rotation angle for lines (0 to 180)
       const deg = (hash % 180);
 
-      // 40% chance of "Pure Black" aesthetic (Users favorite)
-      const isBlack = (hash % 10) < 4;
-      const bg = isBlack 
-         ? `linear-gradient(${angle}deg, #000000 0%, #1a1a1a 100%)` 
+      // 40% chance of using the "Obsidian Gold" (index 2) or "Cyber Void" (index 1) specifically for that premium dark feel
+      const usePremiumDark = (hash % 10) < 4;
+      const bg = usePremiumDark 
+         ? gradients[(hash % 2) + 1] // Index 1 or 2
          : gradients[hash % gradients.length];
 
       return {
@@ -505,38 +510,64 @@ const ConsentManager = () => {
                   
                   {selectedConsent.accountsLinked && selectedConsent.accountsLinked.length > 0 ? (
                     <div className="accounts-grid-premium">
-                          {selectedConsent.accountsLinked.map((acc, idx) => (
-                            <div key={idx} className="premium-account-card">
-                              <div className="card-background-glow"></div>
-                              <div className="card-content">
-                                <div className="card-header">
-                                  <span className="bank-logo-text">{acc.fipId.replace('setu-', '').toUpperCase()}</span>
-                                  <span className="card-type-badge">{acc.accType}</span>
-                                </div>
-                                <div className="card-chip" style={{ display: 'none' }}>
-                                  {/* Chip Removed for Premium Look */}
-                                </div>
-                                <div className="card-number">
-                                  <span className="dots">••••</span>
-                                  <span className="dots">••••</span>
-                                  <span className="dots">••••</span>
-                                  <span className="last-four">{acc.maskedAccNumber.slice(-4)}</span>
-                                </div>
-                                <div className="card-footer">
-                                  <div className="card-info-group">
-                                    <span className="label">STATUS</span>
-                                    <span className="value verified">
-                                      <span className="check-circle">✓</span> Verified
-                                    </span>
+                          {selectedConsent.accountsLinked.map((acc, idx) => {
+                            const styleObj = getCardStyle(acc.maskedAccNumber || `acc-${idx}`);
+                            return (
+                              <div 
+                                key={idx} 
+                                className={`consent-card-premium ${styleObj.pattern}`}
+                                style={{ 
+                                  background: styleObj.background,
+                                  ...styleObj.vars
+                                }}
+                              >
+                                <div className="card-shine"></div>
+                                
+                                {/* Top Row: Bank & Verification */}
+                                <div className="card-top-row">
+                                  <div className="provider-logo" style={{ fontSize: '1.1rem' }}>
+                                    {acc.fipId ? acc.fipId.replace('setu-', '').toUpperCase() : 'BANK'}
                                   </div>
-                                  <div className="card-info-group right">
-                                     <span className="label">TYPE</span>
-                                     <span className="value">{acc.fiType}</span>
+                                  <div className="status-badge-pill">
+                                    <span className="status-dot-pulse active"></span>
+                                    <span className="status-label">VERIFIED</span>
+                                  </div>
+                                </div>
+
+                                {/* Chip Row */}
+                                <div className="card-chip-row">
+                                  <div className="contactless-symbol" style={{ marginLeft: 'auto' }}>
+                                    <svg viewBox="0 0 24 24" fill="none" width="24" height="24">
+                                      <path d="M12 10.9c-.6.6-1.5.6-2.1 0-.6-.6-.6-1.5 0-2.1.6-.6 1.5-.6 2.1 0 .6.6.6 1.5 0 2.1z" fill="rgba(255,255,255,0.8)" />
+                                      <path d="M14.8 13.7c1.4-1.4 1.4-3.7 0-5.1-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0 2.2 2.2 2.2 5.7 0 7.9-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4z" fill="rgba(255,255,255,0.6)" />
+                                      <path d="M17.6 16.5c2.9-2.9 2.9-7.7 0-10.6-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0 3.7 3.7 3.7 9.6 0 13.4-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4z" fill="rgba(255,255,255,0.4)" />
+                                    </svg>
+                                  </div>
+                                </div>
+
+                                {/* Account Number */}
+                                <div className="card-number-large" style={{ fontSize: '1.4rem', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+                                  ••••  ••••  ••••  {acc.maskedAccNumber.slice(-4)}
+                                </div>
+
+                                {/* Bottom Details */}
+                                <div className="card-bottom-row">
+                                  <div className="card-info-col">
+                                    <span className="info-label">ACCOUNT TYPE</span>
+                                    <span className="info-value">{acc.accType}</span>
+                                  </div>
+                                  <div className="card-info-col">
+                                    <span className="info-label">FI TYPE</span>
+                                    <span className="info-value">{acc.fiType}</span>
+                                  </div>
+                                  <div className="card-logo-circles">
+                                    <div className="circle red"></div>
+                                    <div className="circle yellow"></div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <div className="no-accounts">

@@ -70,6 +70,55 @@ const Dashboard = () => {
     paginate(newPage, pageSize);
   };
 
+  const getCardStyle = (id) => {
+    // Simple hash from string id
+    const hash = (id || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    
+    // Consistent with ConsentManager.jsx
+    const gradients = [
+      // 1. Midnight Fintech (Deep Navy & Teal Glow)
+      'radial-gradient(circle at 100% 0%, rgba(45, 212, 191, 0.15) 0%, transparent 50%), linear-gradient(135deg, #020617 0%, #0f172a 50%, #172554 100%)',
+      // 2. Cyber Void (Deep Black & Neon Purple)
+      'radial-gradient(circle at 0% 0%, rgba(124, 58, 237, 0.15) 0%, transparent 50%), radial-gradient(circle at 100% 100%, rgba(219, 39, 119, 0.15) 0%, transparent 50%), linear-gradient(180deg, #09090b 0%, #18181b 100%)',
+      // 3. Obsidian Gold (Premium Dark & Gold Sheen)
+      'linear-gradient(120deg, transparent 30%, rgba(234, 179, 8, 0.08) 45%, rgba(234, 179, 8, 0.02) 50%, transparent 60%), linear-gradient(180deg, #1c1917 0%, #0c0a09 100%)',
+      // 4. Aurora Dark (Slate with Cyan/Violet)
+      'radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 50%), radial-gradient(circle at 15% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 50%), linear-gradient(180deg, #0f172a 0%, #020617 100%)',
+      // 5. Verdant Deep (Emerald & Forest)
+      'radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.15) 0%, transparent 60%), linear-gradient(135deg, #022c22 0%, #064e3b 100%)',
+      // 6. Crimson Night (Rich Red & Dark Carbon)
+      'radial-gradient(circle at 50% 120%, rgba(220, 38, 38, 0.15) 0%, transparent 60%), linear-gradient(to bottom, #18181b 0%, #1a0505 100%)',
+      // 7. Royal Velvet (Deep Mauve/Black)
+      'linear-gradient(to top right, #2e1065 0%, #000000 60%, #4c1d95 100%)'
+    ];
+
+    const patterns = [
+      'pattern-mesh', 'pattern-waves', 'pattern-geo', 'pattern-circles', 'pattern-lines', 'pattern-hex'
+    ];
+    
+    const pattern = patterns[hash % patterns.length];
+    const op = 0.08 + ((hash % 20) / 100);
+    const sz = 20 + (hash % 40);
+    const deg = (hash % 180);
+
+    const usePremiumDark = (hash % 10) < 4;
+    const bg = usePremiumDark 
+       ? gradients[(hash % 2) + 1] 
+       : gradients[hash % gradients.length];
+
+    return {
+        background: bg,
+        pattern: pattern,
+        vars: {
+           '--op': op,
+           '--sz': `${sz}px`,
+           '--deg': `${deg}deg`,
+           '--pos-x': `${hash % 100}%`,
+           '--pos-y': `${(hash >> 2) % 100}%`
+        }
+    };
+  };
+
   const [expandedIdx, setExpandedIdx] = useState(null);
 
   const parseAmount = (value) => {
@@ -420,36 +469,59 @@ const Dashboard = () => {
                   <h3>Active Consents</h3>
                   <div className="carousel-track">
                     {activeConsents.map((consent, index) => {
-                      // Format ID into groups of 4 for visual appeal
-                      // Assuming ID is at least 16 chars, or we pad it
+                      const styleObj = getCardStyle(consent.id || `consent-${index}`);
                       const displayId = (consent.id || "").padEnd(16, "0").slice(0, 16).match(/.{1,4}/g)?.join(" ") || "0000 0000 0000 0000";
-                      const gradientClass = `card-gradient-${index % 5}`;
 
                       return (
                         <div 
                           key={consent.id} 
-                          className={`carousel-card ${gradientClass} ${consentId === consent.id ? 'selected' : ''}`}
+                          className={`consent-card-premium ${styleObj.pattern} ${consentId === consent.id ? 'selected' : ''}`}
                           onClick={() => handleConsentClick(consent.id)}
+                          style={{ 
+                              background: styleObj.background,
+                              ...styleObj.vars,
+                              minWidth: '280px',
+                              cursor: 'pointer',
+                              border: consentId === consent.id ? '2px solid #fff' : 'none',
+                              transform: consentId === consent.id ? 'scale(1.02)' : 'scale(1)'
+                          }}
                         >
-                          <div className="card-top">
-                            <div className="card-chip"></div>
-                            <div className="contactless-icon">
-                              <Wifi size={24} color="#fff" />
-                            </div>
-                          </div>
+                          <div className="card-shine"></div>
                           
-                          <div className="card-middle">
-                            <div className="card-number">{displayId}</div>
+                          {/* Top Row */}
+                          <div className="card-top-row">
+                              <div className="provider-logo" style={{ fontSize: '1.2rem' }}>SETU<span className="font-light">CONSENT</span></div>
+                              <div className="status-badge-pill">
+                                  <span className={`status-dot-pulse ${consent.status?.toLowerCase()}`}></span>
+                                  <span className="status-label">{consent.status}</span>
+                              </div>
                           </div>
 
-                          <div className="card-footer">
-                            <div className="card-info-group">
-                              <span className="card-label">CONSENT HOLDER</span>
-                              <span className="card-value">{consent.vua ? consent.vua.split('@')[0] : 'Unknown'}</span>
+                          {/* Chip Row - Contactless Only */}
+                          <div className="card-chip-row">
+                              <div className="contactless-symbol" style={{ marginLeft: 'auto' }}>
+                                  <svg viewBox="0 0 24 24" fill="none" width="24" height="24">
+                                      <path d="M12 10.9c-.6.6-1.5.6-2.1 0-.6-.6-.6-1.5 0-2.1.6-.6 1.5-.6 2.1 0 .6.6.6 1.5 0 2.1z" fill="rgba(255,255,255,0.8)" />
+                                      <path d="M14.8 13.7c1.4-1.4 1.4-3.7 0-5.1-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0 2.2 2.2 2.2 5.7 0 7.9-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4z" fill="rgba(255,255,255,0.6)" />
+                                      <path d="M17.6 16.5c2.9-2.9 2.9-7.7 0-10.6-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0 3.7 3.7 3.7 9.6 0 13.4-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4z" fill="rgba(255,255,255,0.4)" />
+                                  </svg>
+                              </div>
+                          </div>
+                          
+                          <div className="card-number-large" style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>{displayId}</div>
+
+                          <div className="card-bottom-row">
+                            <div className="card-info-col">
+                              <span className="card-label" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.65rem' }}>CONSENT HOLDER</span>
+                              <span className="card-value" style={{ color: '#fff' }}>{consent.vua ? consent.vua.split('@')[0].toUpperCase() : 'UNKNOWN'}</span>
                             </div>
-                            <div className="card-info-group">
-                              <span className="card-label">CREATED</span>
-                              <span className="card-value">{new Date(consent.createdAt).toLocaleDateString()}</span>
+                            <div className="card-info-col">
+                              <span className="card-label" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.65rem' }}>CREATED</span>
+                              <span className="card-value" style={{ color: '#fff' }}>{new Date(consent.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="card-logo-circles">
+                                <div className="circle red"></div>
+                                <div className="circle yellow"></div>
                             </div>
                           </div>
                         </div>
