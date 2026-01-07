@@ -45,15 +45,19 @@ const Dashboard = () => {
   const [page, setPage] = useState(1);
   const pageSize = 12;
   const { transactions, allTransactions, loading, error, fetchTransactionsViaSession, total, paginate, rawResponse, notification, loadingMessage } = useTransactionsByConsentId();
-  const [activeConsents, setActiveConsents] = useState([]);
-
-  useEffect(() => {
+  const [activeConsents] = useState(() => {
     const saved = localStorage.getItem('setu_consents');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      setActiveConsents(parsed.filter(c => c.status === 'ACTIVE'));
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.filter(c => c.status === 'ACTIVE');
+      } catch (error) {
+        console.error("Error parsing setu_consents:", error);
+        return [];
+      }
     }
-  }, []);
+    return [];
+  });
 
   const handleConsentClick = async (id) => {
     setConsentId(id);
