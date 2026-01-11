@@ -32,7 +32,7 @@ import "../index.css";
 import "../styles/Transactions.css";
 import "../styles/TransactionsCarousel.css";
 
-const Dashboard = () => {
+const Dashboard = ({ setAuthenticated }) => {
   const [activeSection, setActiveSection] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("success") === "true" && params.get("id")) {
@@ -68,6 +68,15 @@ const Dashboard = () => {
   const handlePageChange = (newPage) => {
     setPage(newPage);
     paginate(newPage, pageSize);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("username");
+    if (setAuthenticated) setAuthenticated(false);
   };
 
   const getCardStyle = (id) => {
@@ -429,7 +438,7 @@ const Dashboard = () => {
         </nav>
 
         <div className="sidebar-footer">
-          <button className="logout-link" onClick={() => alert('Logged out!')}>
+          <button className="logout-link" onClick={handleLogout}>
             <span className="icon"><LogOut size={20} /></span> Log Out
           </button>
         </div>
