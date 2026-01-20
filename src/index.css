@@ -50,61 +50,55 @@ body {
 
 /* Sidebar */
 .sidebar {
-  width: 280px;
+  width: 260px;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  padding: 32px 24px;
+  padding: 40px 30px;
   transition: all var(--transition-speed);
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 48px;
-  padding: 0 12px;
+  gap: 16px;
+  margin-bottom: 60px;
+  padding: 0 4px; /* Reduced side padding */
 }
 
 .logo-icon-box {
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, var(--primary-blue), var(--accent-purple));
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #6366f1, #a855f7); /* Indigo to Purple */
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: bold;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
 }
 
 .logo-text {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  letter-spacing: -0.5px;
-  background: linear-gradient(90deg, #fff, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.8px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif; /* Ensure clean font */
 }
 
-.dashboard-root.theme-light .logo-text {
-  background: linear-gradient(90deg, #1e293b, #64748b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+/* Remove gradient text for cleaner look */
+/* .dashboard-root.theme-light .logo-text ... handled by var(--text-primary) */
 
 .nav-section-label {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-secondary);
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   padding-left: 16px;
-  letter-spacing: 1.2px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .sidebar nav {
@@ -117,71 +111,80 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px; /* More spacing between items */
 }
 
 .sidebar nav ul li {
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: 12px 18px; /* Taller touch targets */
+  border-radius: 12px; /* Softer rounded corners */
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 14px;
-  color: var(--text-secondary);
+  gap: 16px;
+  color: var(--text-secondary); /* Muted inactive text */
   font-weight: 500;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
+  font-size: 1rem; /* Readable text */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
 .sidebar nav ul li:hover {
   background-color: var(--hover-bg);
   color: var(--text-primary);
+  transform: translateX(4px); /* Subtle interaction */
 }
 
 .sidebar nav ul li.active {
-  background-color: rgba(37, 99, 235, 0.1);
+  background-color: rgba(99, 102, 241, 0.1); /* Primary Indigo Tint */
   color: var(--primary-blue);
   font-weight: 600;
 }
 
 .dashboard-root.theme-light .sidebar nav ul li.active {
-  background-color: #eff6ff;
-  color: var(--primary-blue);
+  background-color: #eff6ff; /* Light Blue BG */
+  color: #3b82f6; /* Solid Blue Text */
 }
 
 .sidebar nav ul li .icon {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   width: 24px;
-  text-align: center;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s;
+  opacity: 0.8; /* Slightly muted icons by default */
 }
+
 
 .sidebar nav ul li:hover .icon {
   transform: none;
+  opacity: 1;
 }
 
 .sidebar nav ul li.active .icon {
   color: var(--primary-blue);
+  opacity: 1;
 }
 
 .sidebar nav ul li .badge {
   margin-left: auto;
-  background: var(--danger-red);
+  background: #ef4444; /* Clean red */
   color: white;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%; /* Perfect circle */
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
 .sidebar-footer {
   margin-top: auto;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-color);
+  padding-top: 24px;
 }
 
 .logout-link {
@@ -191,14 +194,14 @@ body {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px 16px;
-  font-size: 0.95rem;
+  gap: 16px; /* Match nav gap */
+  padding: 12px 18px; /* Match nav padding */
+  font-size: 1rem; /* Match nav font */
   font-weight: 500;
   width: 100%;
   text-align: left;
   transition: all 0.2s ease;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .logout-link:hover {
@@ -620,57 +623,148 @@ body {
   font-size: 1.1rem;
 }
 
-/* Credit Card */
+/* Credit Card - Ultimate Premium Design */
 .credit-card {
-  background: linear-gradient(135deg, #d946ef, #8b5cf6);
-  border-radius: 20px;
+  /* Background set inline, but base styles here */
+  border-radius: 16px;
   padding: 24px;
-  color: white;
+  color: #fff;
   position: relative;
   overflow: hidden;
   margin-bottom: 20px;
-  box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+  
+  /* Glassmorphism Border & Shadow */
+  box-shadow: 
+    0 15px 35px rgba(0,0,0,0.4), 
+    inset 0 0 0 1px rgba(255,255,255,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.2); 
+    
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  
+  /* Frosted texture handling */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  
+  /* Font defaults */
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.5px;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Subtle pattern overlay */
+.card-noise {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dynamic Sheen */
+.card-shine {
+  position: absolute;
+  top: -150%; left: -150%;
+  width: 300%; height: 300%;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+  transform: rotate(30deg);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.credit-card:hover .card-shine {
+  opacity: 1;
+}
+
+.card-content {
+  position: relative;
+  z-index: 5;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .card-top {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 32px;
+  align-items: center;
+  margin-bottom: 30px;
 }
 
+/* Gold/Silver Chip Style */
 .card-chip {
-  width: 40px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.2);
+  width: 48px;
+  height: 34px;
+  background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%);
   border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.7), 0 2px 4px rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+/* Chip circuit lines */
+.card-chip::before, .card-chip::after {
+  content: '';
+  position: absolute;
+  background: rgba(0,0,0,0.15);
+}
+.card-chip::before {
+  top: 50%; left: 0; right: 0; height: 1px; transform: translateY(-50%);
+}
+.card-chip::after {
+  left: 50%; top: 0; bottom: 0; width: 1px; transform: translateX(-50%);
 }
 
 .card-contactless {
-  font-size: 1.5rem;
-  transform: rotate(90deg);
+  font-size: 0; /* Hide text if present */
+  opacity: 0.8;
 }
 
+/* Embossed Number Look */
 .card-number {
-  font-size: 1.2rem;
-  letter-spacing: 2px;
-  margin-bottom: 24px;
-  font-family: monospace;
+  font-family: 'Courier Prime', 'Space Mono', monospace;
+  font-size: 1.35rem;
+  letter-spacing: 3px;
+  margin-bottom: 25px;
+  font-weight: 600;
+  text-shadow: 0 2px 3px rgba(0,0,0,0.5); /* Deep emboss */
+  opacity: 0.95;
 }
 
 .card-bottom {
   display: flex;
   justify-content: space-between;
+  align-items: flex-end;
 }
 
-.card-balance span, .card-expiry span {
-  font-size: 0.7rem;
-  opacity: 0.8;
+.card-info-group label {
+  display: block;
+  font-size: 0.6rem;
   text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.7;
+  margin-bottom: 4px;
 }
 
-.card-balance h4, .card-expiry h4 {
-  margin: 4px 0 0 0;
-  font-size: 1rem;
+.card-info-group div {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  letter-spacing: 0.5px;
+}
+
+.card-logo {
+  font-weight: 900;
+  font-style: italic;
+  font-size: 1.4rem;
+  opacity: 1;
+  letter-spacing: -1px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
 }
 
 .add-payment-btn {

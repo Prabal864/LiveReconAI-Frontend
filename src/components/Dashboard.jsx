@@ -2,6 +2,19 @@ import "../styles/DashboardRedesign.css";
 import React, { useMemo, useState, useEffect } from "react";
 import { fetchTransactionsByConsentId } from "../api";
 import { useTransactionsByConsentId } from "../hooks/useTransactionsByConsentId";
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from 'recharts';
 import ConsentManager from "./ConsentManager";
 import ProcessingModal from "./ProcessingModal";
 import { SetuProvider } from "../contexts/SetuContext";
@@ -49,6 +62,8 @@ const Dashboard = ({ setAuthenticated }) => {
   });
   const [theme, setTheme] = useState("dark");
   const [selectedConsentId, setSelectedConsentId] = useState("ALL"); // New State for Dropdown
+  const [graphTimeRange, setGraphTimeRange] = useState("Weekly"); // State for Graph Time Range
+  const [isStackExpanded, setIsStackExpanded] = useState(false); // New State for Stack Animation
   const [consentId, setConsentId] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 12;
@@ -118,7 +133,8 @@ const Dashboard = ({ setAuthenticated }) => {
     topSpendingCategory: "None",
     loading: false,
     spendingTrend: [], // For the graph
-    topExpenses: [] // For the "Most Spent" list
+    topExpenses: [], // For the "Most Spent" list
+    spendingCategories: {}
   });
 
   // Calculate statistics based on selectedConsentId
@@ -193,25 +209,96 @@ const Dashboard = ({ setAuthenticated }) => {
             }
         });
 
-        // Calculate Spending Trend (Simple monthly aggregation for the graph)
-        const monthStats = {};
-        const today = new Date();
-        for(let i=5; i>=0; i--) {
-            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-            const key = d.toLocaleString('default', { month: 'short' });
-            monthStats[key] = 0;
+        // Calculate Money Flow based on Time Range
+        const dailyStats = [];
+        const daysToStats = graphTimeRange === "Monthly" ? 30 : 7;
+        
+        // Initialize buckets (Oldest -> Newest)
+        const normalizeDate = (d) => {
+           const n = new Date(d);
+           n.setHours(0, 0, 0, 0);
+           return n;
+        };
+        
+        // 1. Determine Anchor Date (Latest Transaction Date vs Today)
+        let anchorDate = new Date();
+        if (allTxList.length > 0) {
+            const timestamps = allTxList
+                .map(t => t.date || t.timestamp || t.valueDate)
+                .map(ts => new Date(ts).getTime())
+                .filter(ts => !isNaN(ts));
+                
+            if (timestamps.length > 0) {
+                const maxTs = Math.max(...timestamps);
+                const latestTxDate = new Date(maxTs);
+                
+                // If the latest transaction is older than yesterday, use it as anchor
+                // ignoring future dates for safety
+                if (latestTxDate < new Date() && (new Date().getTime() - maxTs > 86400000 * 2)) {
+                   anchorDate = latestTxDate;
+                }
+            }
+        }
+        
+        const todayNormalized = normalizeDate(anchorDate);
+
+        for (let i = daysToStats - 1; i >= 0; i--) {
+            const d = new Date(todayNormalized);
+            d.setDate(todayNormalized.getDate() - i);
+            
+            dailyStats.push({ 
+                dateObj: d, // Keep the object for comparison debugging
+                name: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), 
+                income: 0, 
+                expense: 0 
+            });
         }
 
         allTxList.forEach(t => {
-             if(t.type === 'DEBIT') {
-                const date = t.date || t.timestamp ? new Date(t.date || t.timestamp) : new Date();
-                const key = date.toLocaleString('default', { month: 'short' });
-                if (monthStats[key] !== undefined) {
-                    monthStats[key] += Number(t.amount || 0);
-                }
+            // Robust Date Parsing
+            let rawDate = t.date || t.timestamp || t.bookingDate || t.valueDate;
+            if (!rawDate) return;
+
+            let tDate = new Date(rawDate);
+            if (isNaN(tDate.getTime())) return;
+
+            const tDateNormalized = normalizeDate(tDate);
+            
+            // Calculate difference in milliseconds
+            const diffMs = todayNormalized.getTime() - tDateNormalized.getTime();
+            // Convert to Days (round primarily to handle DST shifts if any, but simplified)
+            const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+            // diffDays = 0 => Anchor Date (Today/Latest)
+            // diffDays = 1 => Yesterday
+            // We only care if 0 <= diffDays < daysToStats
+            if (diffDays >= 0 && diffDays < daysToStats) {
+                 // Map diffDays to array index.
+                 // Array is sorted: [Oldest, ..., Yesterday, Today]
+                 // Index of Today (diffDays=0) should be length-1.
+                 // Index of Yesterday (diffDays=1) should be length-2.
+                 const index = dailyStats.length - 1 - diffDays;
+                 
+                 if (index >= 0 && index < dailyStats.length) {
+                    const amount = Number(t.amount || t.value || 0);
+                    if (!isNaN(amount)) {
+                         const type = String(t.type || t.transactionType || '').toUpperCase();
+                         
+                         // Check for Credit
+                         if (type === 'CREDIT' || type === 'CR' || type === 'INCOME') {
+                            dailyStats[index].income += amount;
+                         } 
+                         // Check for Debit
+                         else if (type === 'DEBIT' || type === 'DR' || type === 'EXPENSE' || (String(t.amount).startsWith('-'))) {
+                            dailyStats[index].expense += Math.abs(amount);
+                         }
+                    }
+                 }
             }
         });
-        const spendingTrend = Object.entries(monthStats).map(([name, value]) => ({ name, value }));
+
+        // Use dailyStats for the graphData
+        const spendingTrend = dailyStats; 
 
         // Get Top Expenses (Highest Debit Transactions)
         const topExpenses = allTxList
@@ -227,8 +314,9 @@ const Dashboard = ({ setAuthenticated }) => {
             transactionCount: count,
             topSpendingCategory: topCategory,
             loading: false,
-            spendingTrend,
-            topExpenses
+            spendingTrend, // Now contains dailyStats array with income/expense
+            topExpenses,
+            spendingCategories
         });
 
       } catch (error) {
@@ -238,7 +326,7 @@ const Dashboard = ({ setAuthenticated }) => {
     };
 
     calculateStats();
-  }, [activeConsents, selectedConsentId]); // Re-run when selection changes
+  }, [activeConsents, selectedConsentId, graphTimeRange]); // Re-run when selection or time range changes
 
   const fetchUserInfo = () => {
     setUserInfo(getUserInfoFromStorage());
@@ -276,53 +364,23 @@ const Dashboard = ({ setAuthenticated }) => {
     if (setAuthenticated) setAuthenticated(false);
   };
 
-  const getCardStyle = (id) => {
-    // Simple hash from string id
-    const hash = (id || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    
-    // Consistent with ConsentManager.jsx
+  const getCardStyle = (id, index = 0) => {
+    // Ultimate Premium Gradients - Deep, Matte, and Sophisticated
     const gradients = [
-      // 1. Midnight Fintech (Deep Navy & Teal Glow)
-      'radial-gradient(circle at 100% 0%, rgba(45, 212, 191, 0.15) 0%, transparent 50%), linear-gradient(135deg, #020617 0%, #0f172a 50%, #172554 100%)',
-      // 2. Cyber Void (Deep Black & Neon Purple)
-      'radial-gradient(circle at 0% 0%, rgba(124, 58, 237, 0.15) 0%, transparent 50%), radial-gradient(circle at 100% 100%, rgba(219, 39, 119, 0.15) 0%, transparent 50%), linear-gradient(180deg, #09090b 0%, #18181b 100%)',
-      // 3. Obsidian Gold (Premium Dark & Gold Sheen)
-      'linear-gradient(120deg, transparent 30%, rgba(234, 179, 8, 0.08) 45%, rgba(234, 179, 8, 0.02) 50%, transparent 60%), linear-gradient(180deg, #1c1917 0%, #0c0a09 100%)',
-      // 4. Aurora Dark (Slate with Cyan/Violet)
-      'radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 50%), radial-gradient(circle at 15% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 50%), linear-gradient(180deg, #0f172a 0%, #020617 100%)',
-      // 5. Verdant Deep (Emerald & Forest)
-      'radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.15) 0%, transparent 60%), linear-gradient(135deg, #022c22 0%, #064e3b 100%)',
-      // 6. Crimson Night (Rich Red & Dark Carbon)
-      'radial-gradient(circle at 50% 120%, rgba(220, 38, 38, 0.15) 0%, transparent 60%), linear-gradient(to bottom, #18181b 0%, #1a0505 100%)',
-      // 7. Royal Velvet (Deep Mauve/Black)
-      'linear-gradient(to top right, #2e1065 0%, #000000 60%, #4c1d95 100%)'
+      // 1. Phantom Black (Matte with subtle light)
+      'linear-gradient(135deg, #1a1a1a 0%, #000000 100%)',
+      // 2. Midnight Titanium (Dark Blue Grey)
+      'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+      // 3. Royal Velvet (Deepest Purple)
+      'linear-gradient(135deg, #2e1065 0%, #0f0720 100%)',
+      // 4. Racing Green (British Racing Green)
+      'linear-gradient(135deg, #064e3b 0%, #022c22 100%)',
+      // 5. Oxblood (Deep Red)
+      'linear-gradient(135deg, #450a0a 0%, #250505 100%)'
     ];
 
-    const patterns = [
-      'pattern-mesh', 'pattern-waves', 'pattern-geo', 'pattern-circles', 'pattern-lines', 'pattern-hex'
-    ];
-    
-    const pattern = patterns[hash % patterns.length];
-    const op = 0.08 + ((hash % 20) / 100);
-    const sz = 20 + (hash % 40);
-    const deg = (hash % 180);
-
-    const usePremiumDark = (hash % 10) < 4;
-    const bg = usePremiumDark 
-       ? gradients[(hash % 2) + 1] 
-       : gradients[hash % gradients.length];
-
-    return {
-        background: bg,
-        pattern: pattern,
-        vars: {
-           '--op': op,
-           '--sz': `${sz}px`,
-           '--deg': `${deg}deg`,
-           '--pos-x': `${hash % 100}%`,
-           '--pos-y': `${(hash >> 2) % 100}%`
-        }
-    };
+    const bg = gradients[index % gradients.length];
+    return { background: bg };
   };
 
   const [expandedIdx, setExpandedIdx] = useState(null);
@@ -412,26 +470,258 @@ const Dashboard = ({ setAuthenticated }) => {
     );
   };
 
+  // --- Graph Helpers ---
+  const getSmoothPath = (points, height, width, maxValOverride = null) => {
+    if (points.length < 2) return "";
+    
+    // Normalize points to chart dimensions
+    const maxY = maxValOverride !== null ? maxValOverride : (Math.max(...points) || 1);
+    const px = width / (points.length - 1);
+    
+    const cords = points.map((y, i) => ({
+      x: i * px,
+      y: height - (y / maxY) * height * 0.7 - (height * 0.15) // 15% padding bottom/top
+    }));
+
+    // Generate Path (Catmull-Rom-like smoothing via cubic bezier)
+    let d = `M ${cords[0].x} ${cords[0].y}`;
+    
+    for (let i = 0; i < cords.length - 1; i++) {
+        const p0 = cords[Math.max(i - 1, 0)];
+        const p1 = cords[i];
+        const p2 = cords[i + 1];
+        const p3 = cords[Math.min(i + 2, cords.length - 1)];
+
+        const cp1x = p1.x + (p2.x - p0.x) * 0.15; // Tension 0.15
+        const cp1y = p1.y + (p2.y - p0.y) * 0.15;
+        const cp2x = p2.x - (p3.x - p1.x) * 0.15;
+        const cp2y = p2.y - (p3.y - p1.y) * 0.15;
+
+        d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+    }
+    return { d, cords };
+  };
+
+  const renderMiniChart = (color) => {
+       // Mini Sparkline SVG
+       const data = [10, 40, 30, 70, 50, 90, 80];
+       const { d } = getSmoothPath(data, 40, 80);
+       return (
+           <div className="mini-chart" style={{width: '80px', height: '40px'}}>
+             <svg width="100%" height="100%" overflow="visible">
+                <path d={d} stroke={color} fill="none" strokeWidth="2" strokeLinecap="round" />
+                <path d={`${d} L 80 40 L 0 40 Z`} fill={color} fillOpacity="0.15" stroke="none" />
+             </svg>
+           </div>
+       );
+  };
+
   const renderSpendingGraph = () => {
-    const data = dashboardStats.spendingTrend;
-    if(!data || data.length === 0) return null;
+    const data = dashboardStats.spendingTrend; 
     
-    const maxVal = Math.max(...data.map(d => d.value)) || 1;
-    
+    // Fallback if empty (should not happen often due to init)
+    if (!data || data.length === 0) return null;
+
+    const startDate = data[0]?.name || "";
+    const endDate = data[data.length - 1]?.name || "";
+
     return (
-        <div className="spending-graph-container">
-            <h3 className="graph-title">Spending Trend (Last 6 Months)</h3>
-            <div className="graph-bars">
-                {data.map((item, i) => (
-                    <div key={i} className="graph-bar-group">
-                         <div className="bar-val-tooltip">{formatCurrency(item.value, "₹")}</div>
-                         <div className="graph-bar" style={{ height: `${(item.value / maxVal) * 100}%` }}></div>
-                         <span className="graph-label">{item.name}</span>
+        <div className="widget-card" style={{gridColumn: '1 / -1', minHeight: '380px'}}>
+            <div className="graph-header-row">
+                <div>
+                   <h3 className="widget-title">Money Flow</h3>
+                   <div style={{fontSize: '0.8rem', color: 'var(--text-secondary)'}}>Income vs Expenses</div>
+                </div>
+                <div style={{display:'flex', gap:'10px'}}>
+                    <div className="time-period-selector active" style={{minWidth: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                        {startDate} - {endDate}
                     </div>
-                ))}
+                    <select 
+                        className="modern-dropdown compact"
+                        value={graphTimeRange}
+                        onChange={(e) => setGraphTimeRange(e.target.value)}
+                    >
+                        <option value="Weekly">Weekly</option>
+                        <option value="Monthly">Monthly</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style={{width: '100%', height: '300px', display: 'flex', justifyContent: 'center'}}>
+                 {/* Fixed dimensions to prevent layout resize errors */}
+                 <AreaChart
+                    width={600}
+                    height={300}
+                    data={data}
+                    margin={{
+                      top: 20,
+                      right: 30,
+                      left: 0,
+                      bottom: 0,
+                    }}
+                  >
+                      <defs>
+                        <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.5} />
+                      <XAxis 
+                        dataKey="name" 
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{fontSize: 12, fill: '#94a3b8'}}
+                        dy={10}
+                        interval={graphTimeRange === 'Monthly' ? 4 : 0}
+                      />
+                      <YAxis 
+                        axisLine={false}
+                        tickLine={false}
+                        width={60}
+                        tick={{fontSize: 12, fill: '#94a3b8'}}
+                        tickFormatter={(val) => `₹${val>=1000 ? val/1000 + 'k' : val}`}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                            backgroundColor: '#1e293b',
+                            border: 'none',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                        }}
+                        itemStyle={{ fontSize: '13px', fontWeight: 600 }}
+                        labelStyle={{ color: '#94a3b8', marginBottom: '8px', fontSize: '12px' }}
+                        formatter={(value) => [`₹${value.toLocaleString()}`, '']}
+                      />
+                      <Legend 
+                        verticalAlign="top" 
+                        height={36} 
+                        iconType="circle"
+                        formatter={(value) => <span style={{color: '#94a3b8', fontSize: '13px', fontWeight: 500, marginLeft: '5px'}}>{value}</span>}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="income" 
+                        name="Income"
+                        stroke="#3b82f6" 
+                        strokeWidth={3}
+                        fillOpacity={1} 
+                        fill="url(#colorIncome)" 
+                        activeDot={{r: 6, strokeWidth: 0}}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="expense" 
+                        name="Expenses"
+                        stroke="#8b5cf6" 
+                        strokeWidth={3}
+                        fillOpacity={1} 
+                        fill="url(#colorExpense)" 
+                        activeDot={{r: 6, strokeWidth: 0}}
+                      />
+                  </AreaChart>
             </div>
         </div>
     );
+  };
+
+  const renderStatisticsAndSavings = () => {
+    // 1. Prepare Data
+    const categories = dashboardStats.spendingCategories || {};
+    const pieData = Object.entries(categories).map(([name, value]) => ({ name, value }));
+    const hasData = pieData.length > 0;
+    
+    const COLORS = ['#3b82f6', '#8b5cf6', '#22c55e', '#ef4444', '#f59e0b', '#ec4899'];
+
+    return (
+    <div className="dashboard-row-split">
+        {/* Savings / Goals Widget */}
+        <div className="widget-card">
+            <div className="widget-header">
+                <span className="widget-title">Saving Goals</span>
+                <select style={{background:'transparent', border:'none', color:'#888', cursor:'pointer'}}><option>This Month</option></select>
+            </div>
+            <div className="savings-list">
+                 <div className="saving-item">
+                     <div className="saving-info">
+                        <div className="saving-meta">
+                            <div className="saving-icon">💰</div>
+                            <span>Mutual Funds</span>
+                        </div>
+                        <span>$900.17</span>
+                     </div>
+                     <div className="progress-bg"><div className="progress-fill" style={{width: '65%', background: 'var(--accent-purple)'}}></div></div>
+                 </div>
+
+                 <div className="saving-item">
+                     <div className="saving-info">
+                        <div className="saving-meta">
+                            <div className="saving-icon" style={{color:'#22c55e', background: 'rgba(34,197,94,0.1)'}}>📈</div>
+                            <span>Investments</span>
+                        </div>
+                        <span>$745.78</span>
+                     </div>
+                     <div className="progress-bg"><div className="progress-fill" style={{width: '45%', background: '#22c55e'}}></div></div>
+                 </div>
+
+                 <div className="saving-item">
+                     <div className="saving-info">
+                        <div className="saving-meta">
+                             <div className="saving-icon" style={{color:'#ef4444', background: 'rgba(239,68,68,0.1)'}}>✈️</div>
+                             <span>Travel Goal</span>
+                        </div>
+                        <span>$2,500.00</span>
+                     </div>
+                     <div className="progress-bg"><div className="progress-fill" style={{width: '25%', background: '#ef4444'}}></div></div>
+                 </div>
+            </div>
+        </div>
+
+        {/* Statistics Pie Chart Widget */}
+        <div className="widget-card">
+            <div className="widget-header">
+                <span className="widget-title">Spend Analysis</span>
+            </div>
+            <div className="donut-container" style={{display:'flex', flexDirection:'column', height:'100%', minHeight: '220px', alignItems: 'center', justifyContent: 'center'}}>
+                 {hasData ? (
+                    <PieChart width={250} height={250}>
+                        <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            paddingAngle={5}
+                            dataKey="value"
+                        >
+                            {pieData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip 
+                            formatter={(value) => formatCurrency(value, "₹")}
+                            contentStyle={{backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff'}}
+                            itemStyle={{color: '#fff'}}
+                        />
+                        <Legend 
+                            verticalAlign="bottom" 
+                            align="center"
+                            iconType="circle"
+                            formatter={(val) => <span style={{color:'#94a3b8', fontSize:'12px'}}>{val}</span>}
+                        />
+                    </PieChart>
+                 ) : (
+                    <div style={{display:'flex', justifyContent:'center', alignItems:'center', height:'100%', color:'#666'}}>No spending data available</div>
+                 )}
+            </div>
+        </div>
+    </div>
+  );
   };
 
   // --- New Render Functions for the Design UI ---
@@ -472,48 +762,35 @@ const Dashboard = ({ setAuthenticated }) => {
                 {/* 3-Column Stats Grid */}
                 <div className="stats-grid">
                     <div className="stat-card">
-                        <div className="stat-icon sales">💰</div>
                         <div className="stat-info">
                             <span className="stat-label">Total Income</span>
                             <h3 className="stat-value">{dashboardStats.loading ? "..." : formatCurrency(dashboardStats.totalIncome, "₹")}</h3>
+                            {renderMiniChart('white')}
                         </div>
                     </div>
                     
                     <div className="stat-card">
-                        <div className="stat-icon experience">💸</div>
                         <div className="stat-info">
                             <span className="stat-label">Total Spending</span>
                             <h3 className="stat-value">{dashboardStats.loading ? "..." : formatCurrency(dashboardStats.totalSpending, "₹")}</h3>
+                            {renderMiniChart('rgba(255,255,255,0.5)')}
                         </div>
                     </div>
 
                     <div className="stat-card">
-                         <div className="stat-icon revenue">📊</div>
                         <div className="stat-info">
                             <span className="stat-label">Top Category</span>
                              <h3 className="stat-value" style={{fontSize: '1.2rem'}}>{dashboardStats.loading ? "..." : dashboardStats.topSpendingCategory}</h3>
+                             {renderMiniChart('var(--accent-purple)')}
                         </div>
                     </div>
                 </div>
 
-                {/* Graph Section */}
-                <div className="graph-section-wrapper">
-                    <div className="spending-graph-side">
-                        {renderSpendingGraph()}
-                    </div>
-                    <div className="savings-summary-side">
-                         <div className="balance-header">
-                            <span className="balance-label">Net Savings</span>
-                            <h2 className="balance-amount">
-                                {dashboardStats.loading ? "..." : formatCurrency(dashboardStats.netSavings, "₹")}
-                            </h2>
-                            <span className="balance-sub">
-                                {dashboardStats.netSavings >= 0 ? "On Track" : "Action Needed"}
-                            </span>
-                         </div>
-                         <button className="view-report-btn">View Detailed Report</button>
-                    </div>
-                </div>
+                {/* Money Flow Graph */}
+                {renderSpendingGraph()}
+
+                {/* Savings & Stats Row */}
+                {renderStatisticsAndSavings()}
 
                 {/* Highest Value Transactions Table */}
                 <div className="invoices-section">
@@ -562,40 +839,104 @@ const Dashboard = ({ setAuthenticated }) => {
                 <div className="right-widget payment-widget">
                     <h3>Linked Account</h3>
                     
-                    {(() => {
-                        const targetId = selectedConsentId === 'ALL' && activeConsents.length > 0 ? activeConsents[0].id : selectedConsentId;
-                        if(!targetId || targetId === 'ALL') return <div className="no-card-msg">No Active Accounts Linked</div>;
-                        
-                        const consent = activeConsents.find(c => c.id === targetId);
-                        if(!consent) return <div className="no-card-msg">Account Not Found</div>;
+                    {/* Animated Stacked Cards Wrapper */}
+                    <div 
+                         className="card-stack-container" 
+                         style={{
+                             height: isStackExpanded 
+                                ? `${Math.max(220, activeConsents.length * 240 + 20)}px` // Expanded height
+                                : '240px' // Collapsed height
+                         }}
+                         onClick={() => setIsStackExpanded(!isStackExpanded)}
+                    >
+                        {activeConsents.length === 0 ? (
+                           <div className="no-card-msg">No Active Accounts Linked</div>
+                        ) : activeConsents.map((consent, i) => {
+                             const styleObj = getCardStyle(consent.id, i);
+                             const cleanId = (consent.id || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                             const displayId = cleanId.padEnd(16, "0").slice(0, 16).match(/.{1,4}/g)?.join(" ") || "0000 0000 0000 0000";
+                             const isTop = i === 0;
+                             
+                             // Calculate dynamic styles for stack/spread animation
+                             const stackStyle = isStackExpanded 
+                                ? { 
+                                     top: `${i * 240}px`, 
+                                     transform: 'scale(1)',
+                                     zIndex: activeConsents.length - i,
+                                     position: 'absolute'
+                                  }
+                                : {
+                                     top: `${i * 10}px`,
+                                     transform: `scale(${1 - (i * 0.05)}) translateY(${i * -5}px)`,
+                                     zIndex: activeConsents.length - i,
+                                     opacity: 1 - (i * 0.2),
+                                     position: 'absolute'
+                                  };
 
-                        const styleObj = getCardStyle(targetId);
-                        const cleanId = (targetId || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-                        const displayId = cleanId.padEnd(16, "0").slice(0, 16).match(/.{1,4}/g)?.join(" ") || "0000 0000 0000 0000";
+                             return (
+                                <div 
+                                    key={consent.id}
+                                    className="card-stack-item"
+                                    style={stackStyle}
+                                >
+                                    <div className="credit-card" style={{ background: styleObj.background, marginBottom: '0', cursor: 'pointer' }}>
+                                        {/* Noise Texture & Shine Effect */}
+                                        <div className="card-noise" />
+                                        <div className="card-shine" />
+                                        
+                                        <div className="card-content">
+                                            <div className="card-top">
+                                                <div className="card-chip" />
+                                                <div className="card-contactless" style={{opacity: 0.9}}>
+                                                    {/* Contactless Wave Icon */}
+                                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform: 'rotate(45deg)'}}>
+                                                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 4 3.5 6 6.5"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
 
-                        return (
-                            <div className="credit-card" style={{ background: styleObj.background, ...styleObj.vars, marginBottom: '0' }}>
-                                <div className="card-top">
-                                <div className="card-chip"></div>
-                                <div className="card-contactless">)))</div>
+                                            <div className="card-number">{displayId}</div>
+
+                                            <div className="card-bottom">
+                                                <div className="card-info-group">
+                                                    <label>Holder</label>
+                                                    <div>{consent.vua || 'Unknown User'}</div>
+                                                    <div className="card-logo" style={{marginTop: '4px'}}>SETU</div>
+                                                </div>
+                                                <div className="card-info-group" style={{textAlign: 'right'}}>
+                                                    <label>Created</label>
+                                                    <div>{new Date(consent.createdAt).toLocaleDateString()}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="card-number">{displayId}</div>
-                                <div className="card-bottom">
-                                <div className="card-balance">
-                                    <span>Holder</span>
-                                    <h4 style={{fontSize: '0.9rem'}}>{consent.vua || 'Unknown User'}</h4>
-                                </div>
-                                <div className="card-expiry">
-                                    <span>Created</span>
-                                    <h4 style={{fontSize: '0.8rem'}}>{new Date(consent.createdAt).toLocaleDateString()}</h4>
-                                </div>
-                                </div>
-                                <div className="card-logo">SETU</div>
+                             );
+                        })}
+                        {activeConsents.length > 1 && !isStackExpanded && (
+                            <div className="card-stack-hint">
+                                Click to view {activeConsents.length} cards
                             </div>
-                        );
-                    })()}
+                        )}
+                    </div>
 
                     <button className="add-payment-btn" onClick={() => setActiveSection('Consent')}>Manage Accounts</button>
+                    
+                    <div className="widget-card" style={{marginTop: '24px', padding: '20px'}}>
+                        <h4 style={{marginBottom: '16px'}}>Recent Activity</h4>
+                        <div style={{display:'flex', flexDirection:'column', gap:'16px'}}>
+                            <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
+                                <div style={{width:'36px', height:'36px', borderRadius:'50%', background:'#f0f9ff', display:'flex', alignItems:'center', justifyContent:'center', color:'#2563eb'}}>S</div>
+                                <div><div style={{fontSize:'0.9rem', fontWeight:600}}>Stripe</div><div style={{fontSize:'0.75rem', color:'#888'}}>Today, 7:18 AM</div></div>
+                                <div style={{marginLeft:'auto', fontWeight:600, color:'#22c55e'}}>+$658.10</div>
+                            </div>
+                            <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
+                                <div style={{width:'36px', height:'36px', borderRadius:'50%', background:'#fdf2f8', display:'flex', alignItems:'center', justifyContent:'center', color:'#db2777'}}>F</div>
+                                <div><div style={{fontSize:'0.9rem', fontWeight:600}}>Facebook</div><div style={{fontSize:'0.75rem', color:'#888'}}>Yesterday</div></div>
+                                <div style={{marginLeft:'auto', fontWeight:600, color:'#ef4444'}}>- $425.00</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
