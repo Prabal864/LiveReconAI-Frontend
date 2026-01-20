@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSetu } from '../contexts/SetuContext';
+import axios from 'axios';
 import Toast from './Toast';
 import ConfirmationModal from './ConfirmationModal';
 import { LogOut, Undo2 } from 'lucide-react';
@@ -210,6 +211,7 @@ const ConsentManager = () => {
     try {
       await login();
     } catch (err) {
+      console.error("Login error:", err);
       // Error is handled in context
     }
   };
@@ -277,6 +279,7 @@ const ConsentManager = () => {
         window.open(result.url, '_blank');
       }
     } catch (err) {
+      console.error("Create consent error:", err);
       setLocalError('Failed to create consent.');
     } finally {
       setIsSubmitting(false);
@@ -294,19 +297,13 @@ const ConsentManager = () => {
 
     setIsRevoking(true);
     try {
-      const response = await fetch(`http://localhost:8072/api/setu/auth/${consentId}/revokeConsent`, {
-        method: 'POST'
-      });
+      await axios.post(`http://localhost:8072/api/setu/auth/${consentId}/revokeConsent`);
       
-      if (response.ok) {
-        setConsents(prev => prev.map(c => c.id === consentId ? { ...c, status: 'REVOKED' } : c));
-        if (selectedConsent && selectedConsent.id === consentId) {
-          setSelectedConsent(prev => ({ ...prev, status: 'REVOKED' }));
-        }
-        setRevokeModal({ show: false, consentId: null });
-      } else {
-        throw new Error('Failed to revoke');
+      setConsents(prev => prev.map(c => c.id === consentId ? { ...c, status: 'REVOKED' } : c));
+      if (selectedConsent && selectedConsent.id === consentId) {
+        setSelectedConsent(prev => ({ ...prev, status: 'REVOKED' }));
       }
+      setRevokeModal({ show: false, consentId: null });
     } catch (err) {
       console.error("Revoke error:", err);
       setLocalError('Failed to revoke consent');
@@ -592,8 +589,8 @@ const ConsentManager = () => {
               ) : (
                 <div className="consents-grid">
                   {consents.map((consent, idx) => {
-                    const styleObj = getCardStyle(consent.id);
-                    return (
+                    const styleObj = getCardStyle(consent.id);                    const cleanId = (consent.id || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                    const displayId = cleanId.padEnd(16, "0").slice(0, 16).match(/.{1,4}/g)?.join(" ") || "0000 0000 0000 0000";                    return (
                         <div 
                             key={idx} 
                             className={`consent-card-premium ${styleObj.pattern}`} 
@@ -628,7 +625,7 @@ const ConsentManager = () => {
 
                           {/* Card Number (Consent ID) */}
                           <div className="card-number-large">
-                              {consent.id ? (consent.id.slice(0,4) + '  ' + consent.id.slice(4,8) + '  ' + consent.id.slice(8,12) + '  ' + consent.id.slice(12,16)) : '0000  0000  0000  0000'}
+                              {displayId}
                           </div>
 
                           {/* Bottom Details */}
