@@ -1,4 +1,6 @@
+import "../styles/DashboardRedesign.css";
 import React, { useMemo, useState, useEffect } from "react";
+import { fetchTransactionsByConsentId } from "../api";
 import { useTransactionsByConsentId } from "../hooks/useTransactionsByConsentId";
 import ConsentManager from "./ConsentManager";
 import ProcessingModal from "./ProcessingModal";
@@ -46,10 +48,12 @@ const Dashboard = ({ setAuthenticated }) => {
     return "Dashboard";
   });
   const [theme, setTheme] = useState("dark");
+  const [selectedConsentId, setSelectedConsentId] = useState("ALL"); // New State for Dropdown
   const [consentId, setConsentId] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 12;
   const { transactions, allTransactions, loading, error, fetchTransactionsViaSession, total, paginate, rawResponse, notification, loadingMessage } = useTransactionsByConsentId();
+  
   const [activeConsents] = useState(() => {
     const saved = localStorage.getItem('setu_consents');
     if (saved) {
@@ -63,6 +67,11 @@ const Dashboard = ({ setAuthenticated }) => {
     }
     return [];
   });
+
+  // Derived state for the currently selected consent object
+  const currentConsent = useMemo(() => {
+    return activeConsents.find(c => c.id === selectedConsentId) || null;
+  }, [selectedConsentId, activeConsents]);
 
   const getUserInfoFromStorage = () => {
     const username = localStorage.getItem("username");
@@ -99,6 +108,137 @@ const Dashboard = ({ setAuthenticated }) => {
   const [userInfo, setUserInfo] = useState(getUserInfoFromStorage);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+
+  const [dashboardStats, setDashboardStats] = useState({
+    totalIncome: 0,
+    totalSpending: 0,
+    netSavings: 0,
+    balance: 0,
+    transactionCount: 0,
+    topSpendingCategory: "None",
+    loading: false,
+    spendingTrend: [], // For the graph
+    topExpenses: [] // For the "Most Spent" list
+  });
+
+  // Calculate statistics based on selectedConsentId
+  useEffect(() => {
+    const calculateStats = async () => {
+      if (!activeConsents || activeConsents.length === 0) return;
+      
+      setDashboardStats(prev => ({ ...prev, loading: true }));
+      try {
+        // Filter consents to fetch based on dropdown selection
+        const consentsToFetch = selectedConsentId === "ALL" 
+            ? activeConsents 
+            : activeConsents.filter(c => c.id === selectedConsentId);
+
+        const statsPromises = consentsToFetch.map(consent => 
+            fetchTransactionsByConsentId(consent.id)
+              .catch(err => {
+                console.warn(`Failed to fetch transactions for consent ${consent.id}`, err);
+                return []; 
+              })
+        );
+        
+        const results = await Promise.all(statsPromises);
+        
+        let income = 0;
+        let spending = 0;
+        let count = 0;
+        const spendingCategories = {};
+        let allTxList = [];
+
+        results.forEach(data => {
+            const txs = Array.isArray(data) ? data : (data?.transactions || []);
+            count += txs.length;
+            allTxList = [...allTxList, ...txs];
+            txs.forEach(t => {
+                const amount = Number(t.amount);
+                if (!isNaN(amount)) {
+                    if (t.type === 'CREDIT') {
+                        income += amount;
+                    } else if (t.type === 'DEBIT') {
+                        spending += amount;
+
+                        // Categorization Logic (Reuse existing logic)
+                        let category = 'Others';
+                        const narration = (t.narration || '').toLowerCase();
+                        const mode = (t.mode || '').toLowerCase();
+
+                        if (mode.includes('upi') || narration.includes('upi')) category = 'UPI Payments';
+                        else if (mode.includes('imps') || mode.includes('neft') || mode.includes('rtgs')) category = 'Transfers';
+                        else if (mode.includes('card') || narration.includes('pos') || narration.includes('visa') || narration.includes('mastercard')) category = 'Card Spend';
+                        else if (mode.includes('atm') || narration.includes('atm') || narration.includes('withdraw')) category = 'Cash Withdrawal';
+                        else if (narration.includes('interest')) category = 'Bank Charges/Interest';
+                        else if (narration.includes('food') || narration.includes('zomato') || narration.includes('swiggy')) category = 'Food & Dining';
+                        else if (narration.includes('uber') || narration.includes('ola') || narration.includes('fuel')) category = 'Transport';
+
+                        spendingCategories[category] = (spendingCategories[category] || 0) + amount;
+                    }
+                }
+            });
+        });
+
+        const netSavings = income - spending;
+        const balance = netSavings; // In a real app, you'd add this to opening balance
+        
+        // Find top spending category
+        let topCategory = "None";
+        let maxSpend = 0;
+        Object.entries(spendingCategories).forEach(([cat, amount]) => {
+            if (amount > maxSpend) {
+                maxSpend = amount;
+                topCategory = cat;
+            }
+        });
+
+        // Calculate Spending Trend (Simple monthly aggregation for the graph)
+        const monthStats = {};
+        const today = new Date();
+        for(let i=5; i>=0; i--) {
+            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            const key = d.toLocaleString('default', { month: 'short' });
+            monthStats[key] = 0;
+        }
+
+        allTxList.forEach(t => {
+             if(t.type === 'DEBIT') {
+                const date = t.date || t.timestamp ? new Date(t.date || t.timestamp) : new Date();
+                const key = date.toLocaleString('default', { month: 'short' });
+                if (monthStats[key] !== undefined) {
+                    monthStats[key] += Number(t.amount || 0);
+                }
+            }
+        });
+        const spendingTrend = Object.entries(monthStats).map(([name, value]) => ({ name, value }));
+
+        // Get Top Expenses (Highest Debit Transactions)
+        const topExpenses = allTxList
+            .filter(t => t.type === 'DEBIT')
+            .sort((a, b) => Number(b.amount) - Number(a.amount))
+            .slice(0, 5);
+
+        setDashboardStats({
+            totalIncome: income,
+            totalSpending: spending,
+            netSavings: netSavings,
+            balance: balance,
+            transactionCount: count,
+            topSpendingCategory: topCategory,
+            loading: false,
+            spendingTrend,
+            topExpenses
+        });
+
+      } catch (error) {
+        console.error("Error calculating dashboard stats:", error);
+        setDashboardStats(prev => ({ ...prev, loading: false }));
+      }
+    };
+
+    calculateStats();
+  }, [activeConsents, selectedConsentId]); // Re-run when selection changes
 
   const fetchUserInfo = () => {
     setUserInfo(getUserInfoFromStorage());
@@ -272,160 +412,193 @@ const Dashboard = ({ setAuthenticated }) => {
     );
   };
 
+  const renderSpendingGraph = () => {
+    const data = dashboardStats.spendingTrend;
+    if(!data || data.length === 0) return null;
+    
+    const maxVal = Math.max(...data.map(d => d.value)) || 1;
+    
+    return (
+        <div className="spending-graph-container">
+            <h3 className="graph-title">Spending Trend (Last 6 Months)</h3>
+            <div className="graph-bars">
+                {data.map((item, i) => (
+                    <div key={i} className="graph-bar-group">
+                         <div className="bar-val-tooltip">{formatCurrency(item.value, "₹")}</div>
+                         <div className="graph-bar" style={{ height: `${(item.value / maxVal) * 100}%` }}></div>
+                         <span className="graph-label">{item.name}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+  };
+
   // --- New Render Functions for the Design UI ---
 
   const renderDashboardHome = () => (
-    <div className="dashboard-home-grid">
-      {/* Left Column (Main) */}
-      <div className="dashboard-main-col">
-        {/* Stats Row */}
-        <div className="stats-row">
-          <div className="stat-card">
-            <div className="stat-icon sales">🛍️</div>
-            <div className="stat-info">
-              <span className="stat-label">Total Sales</span>
-              <h3 className="stat-value">$987,454</h3>
+    <div className="dashboard-container-v2">
+        {/* Header / Filter Bar */}
+        <div className="dashboard-filter-bar">
+            <div className="filter-group">
+                <span className="filter-label">Financial Overview For:</span>
+                <select 
+                    value={selectedConsentId}
+                    onChange={(e) => setSelectedConsentId(e.target.value)}
+                    className="modern-dropdown"
+                >
+                    <option value="ALL">All Accounts (Consolidated)</option>
+                    {activeConsents.map(c => {
+                         const label = c.start 
+                            ? `Card ending in ...${c.id.slice(-4)}` 
+                            : (c.vua ? `${c.vua.split('@')[0]} (${c.vua.split('@')[1] || 'VUA'})` : `Consent ID: ${c.id.slice(0,8)}...`);
+                         return (
+                            <option key={c.id} value={c.id}>{label}</option>
+                         );
+                    })}
+                </select>
             </div>
-            <span className="stat-badge success">↑ 9.2%</span>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon experience">📦</div>
-            <div className="stat-info">
-              <span className="stat-label">Total Experience</span>
-              <h3 className="stat-value">$546,654</h3>
+            
+            <div className="filter-actions">
+                 <span style={{ fontSize: '0.85rem', color: '#888' }}>
+                    {dashboardStats.loading ? 'Syncing...' : `Last updated: ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`}
+                 </span>
             </div>
-            <span className="stat-badge danger">↓ 5.9%</span>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon revenue">🎁</div>
-            <div className="stat-info">
-              <span className="stat-label">Total Revenue</span>
-              <h3 className="stat-value">$575,584</h3>
-            </div>
-            <span className="stat-badge success">↑ 7.4%</span>
-          </div>
         </div>
 
-        {/* Balance & Chart Row */}
-        <div className="balance-chart-row">
-          <div className="balance-section">
-            <div className="balance-header">
-              <span className="balance-label">My Balance</span>
-              <h2 className="balance-amount">$154.54,85,00</h2>
-              <span className="balance-sub">You Made An Extra $58,313.00 In This Years</span>
-            </div>
-            <div className="balance-actions">
-              <button className="action-btn"><span className="icon">+</span> Add</button>
-              <button className="action-btn"><span className="icon">↻</span> Convert</button>
-              <button className="action-btn"><span className="icon">↗</span> Send</button>
-              <button className="action-btn"><span className="icon">↙</span> Receive</button>
-              <button className="action-btn"><span className="icon">•••</span> More</button>
-            </div>
-          </div>
-          <div className="chart-section">
-             {/* Simple CSS Bar Chart Placeholder */}
-             <div className="simple-bar-chart">
-                {[30, 50, 40, 70, 90, 60, 45].map((h, i) => (
-                  <div key={i} className="chart-bar-wrapper">
-                    <div className={`chart-bar ${i===4 ? 'active':''}`} style={{height: `${h}%`}}></div>
-                    <span className="chart-label">Nov {12+i}</span>
-                  </div>
-                ))}
-             </div>
-          </div>
-        </div>
+        <div className="dashboard-content-grid">
+            {/* Main Column */}
+            <div className="main-content">
+                {/* 3-Column Stats Grid */}
+                <div className="stats-grid">
+                    <div className="stat-card">
+                        <div className="stat-icon sales">💰</div>
+                        <div className="stat-info">
+                            <span className="stat-label">Total Income</span>
+                            <h3 className="stat-value">{dashboardStats.loading ? "..." : formatCurrency(dashboardStats.totalIncome, "₹")}</h3>
+                        </div>
+                    </div>
+                    
+                    <div className="stat-card">
+                        <div className="stat-icon experience">💸</div>
+                        <div className="stat-info">
+                            <span className="stat-label">Total Spending</span>
+                            <h3 className="stat-value">{dashboardStats.loading ? "..." : formatCurrency(dashboardStats.totalSpending, "₹")}</h3>
+                        </div>
+                    </div>
 
-        {/* Invoices Table */}
-        <div className="invoices-section">
-          <div className="section-header">
-            <h3>Invoices</h3>
-            <button className="new-invoice-btn">+ New Invoice</button>
-          </div>
-          <table className="invoices-table">
-            <thead>
-              <tr>
-                <th>NUMBER</th>
-                <th>DATE</th>
-                <th>CLIENT NAME</th>
-                <th>AMOUNT</th>
-                <th>STATUS</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span className="icon">📄</span> WAL3241</td>
-                <td>April 28, 2016</td>
-                <td>Arlene McCoy</td>
-                <td>$154.54,85,00</td>
-                <td><span className="status-badge complete">Complete</span></td>
-              </tr>
-              <tr>
-                <td><span className="icon">📄</span> WAL3241</td>
-                <td>April 28, 2016</td>
-                <td>Arlene McCoy</td>
-                <td>$154.54,85,00</td>
-                <td><span className="status-badge pending">Pending</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Right Column (Sidebar Widgets) */}
-      <div className="dashboard-right-col">
-        {/* Payment Method */}
-        <div className="right-widget payment-widget">
-          <h3>Payment Method</h3>
-          <div className="credit-card">
-            <div className="card-top">
-              <div className="card-chip"></div>
-              <div className="card-contactless">)))</div>
-            </div>
-            <div className="card-number">4557 1475 1474 1447</div>
-            <div className="card-bottom">
-              <div className="card-balance">
-                <span>Balance</span>
-                <h4>$245,875</h4>
-              </div>
-              <div className="card-expiry">
-                <span>Exp Date</span>
-                <h4>02/24</h4>
-              </div>
-            </div>
-            <div className="card-logo"></div>
-          </div>
-          <button className="add-payment-btn">+ Add Payment Method</button>
-        </div>
-
-        {/* Recent Transactions List */}
-        <div className="right-widget recent-widget">
-          <div className="widget-header">
-            <h3>Recent</h3>
-            <button className="more-btn">•••</button>
-          </div>
-          <div className="recent-list">
-            {[
-              {name: 'Esther Howard', date: 'September 5, 2013', amount: '↑ 10.2%', type: 'Transfer'},
-              {name: 'Ralph Edwards', date: 'September 5, 2013', amount: '↑ 11.2%', type: 'Transfer'},
-              {name: 'Dianne Russell', date: 'May 31, 2015', amount: '↓ 4.2%', type: 'Subscription', down: true},
-              {name: 'Courtney Henry', date: 'April 28, 2016', amount: '↑ 58.6%', type: 'Transfer'},
-              {name: 'Ronald Richards', date: 'October 25, 2019', amount: '↓ 7.5%', type: 'Transfer', down: true},
-            ].map((item, i) => (
-              <div key={i} className="recent-item">
-                <div className="recent-avatar"></div>
-                <div className="recent-info">
-                  <h4>{item.name}</h4>
-                  <span>{item.date}</span>
+                    <div className="stat-card">
+                         <div className="stat-icon revenue">📊</div>
+                        <div className="stat-info">
+                            <span className="stat-label">Top Category</span>
+                             <h3 className="stat-value" style={{fontSize: '1.2rem'}}>{dashboardStats.loading ? "..." : dashboardStats.topSpendingCategory}</h3>
+                        </div>
+                    </div>
                 </div>
-                <div className={`recent-amount ${item.down ? 'down' : 'up'}`}>
-                  <h4>{item.amount}</h4>
-                  <span>{item.type}</span>
+
+                {/* Graph Section */}
+                <div className="graph-section-wrapper">
+                    <div className="spending-graph-side">
+                        {renderSpendingGraph()}
+                    </div>
+                    <div className="savings-summary-side">
+                         <div className="balance-header">
+                            <span className="balance-label">Net Savings</span>
+                            <h2 className="balance-amount">
+                                {dashboardStats.loading ? "..." : formatCurrency(dashboardStats.netSavings, "₹")}
+                            </h2>
+                            <span className="balance-sub">
+                                {dashboardStats.netSavings >= 0 ? "On Track" : "Action Needed"}
+                            </span>
+                         </div>
+                         <button className="view-report-btn">View Detailed Report</button>
+                    </div>
                 </div>
-              </div>
-            ))}
-          </div>
+
+                {/* Highest Value Transactions Table */}
+                <div className="invoices-section">
+                    <div className="section-header">
+                        <h3>Highest Value Transactions</h3>
+                        <button className="new-invoice-btn" onClick={() => setActiveSection("Transactions")}>See All</button>
+                    </div>
+                    <div className="table-responsive">
+                    {dashboardStats.topExpenses.length > 0 ? (
+                        <table className="invoices-table">
+                            <thead>
+                                <tr>
+                                    <th>Transaction</th>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {dashboardStats.topExpenses.map((tx, idx) => (
+                                    <tr key={idx}>
+                                        <td>
+                                            <div className="tx-name-wrap">
+                                                <div className="tx-icon-box">🧾</div>
+                                                <span style={{fontWeight:500}}>{tx.narration || tx.id || 'Unknown'}</span>
+                                            </div>
+                                        </td>
+                                        <td>{new Date(tx.date || tx.timestamp).toLocaleDateString()}</td>
+                                        <td>{tx.mode || 'Payment'}</td>
+                                        <td style={{color: '#ef4444', fontWeight: '700'}}>{formatCurrency(tx.amount, "₹")}</td>
+                                        <td><span className="status-badge complete">Completed</span></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <div className="empty-chart-msg">No relevant transactions found.</div>
+                    )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Sidebar Column */}
+            <div className="sidebar-content">
+                <div className="right-widget payment-widget">
+                    <h3>Linked Account</h3>
+                    
+                    {(() => {
+                        const targetId = selectedConsentId === 'ALL' && activeConsents.length > 0 ? activeConsents[0].id : selectedConsentId;
+                        if(!targetId || targetId === 'ALL') return <div className="no-card-msg">No Active Accounts Linked</div>;
+                        
+                        const consent = activeConsents.find(c => c.id === targetId);
+                        if(!consent) return <div className="no-card-msg">Account Not Found</div>;
+
+                        const styleObj = getCardStyle(targetId);
+                        const cleanId = (targetId || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                        const displayId = cleanId.padEnd(16, "0").slice(0, 16).match(/.{1,4}/g)?.join(" ") || "0000 0000 0000 0000";
+
+                        return (
+                            <div className="credit-card" style={{ background: styleObj.background, ...styleObj.vars, marginBottom: '0' }}>
+                                <div className="card-top">
+                                <div className="card-chip"></div>
+                                <div className="card-contactless">)))</div>
+                                </div>
+                                <div className="card-number">{displayId}</div>
+                                <div className="card-bottom">
+                                <div className="card-balance">
+                                    <span>Holder</span>
+                                    <h4 style={{fontSize: '0.9rem'}}>{consent.vua || 'Unknown User'}</h4>
+                                </div>
+                                <div className="card-expiry">
+                                    <span>Created</span>
+                                    <h4 style={{fontSize: '0.8rem'}}>{new Date(consent.createdAt).toLocaleDateString()}</h4>
+                                </div>
+                                </div>
+                                <div className="card-logo">SETU</div>
+                            </div>
+                        );
+                    })()}
+
+                    <button className="add-payment-btn" onClick={() => setActiveSection('Consent')}>Manage Accounts</button>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
   );
 

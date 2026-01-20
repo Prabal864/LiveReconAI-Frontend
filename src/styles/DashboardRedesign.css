@@ -1,0 +1,378 @@
+/* Dashboard Redesign Layout v2 */
+
+.dashboard-container-v2 {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+}
+
+.dashboard-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    border: 1px solid var(--border-color);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.filter-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.modern-dropdown {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    min-width: 240px;
+    max-width: 400px;
+    outline: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.modern-dropdown:hover {
+    border-color: var(--primary-color);
+}
+
+.dashboard-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px; /* Main content vs Sidebar */
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 1100px) {
+    .dashboard-content-grid {
+        grid-template-columns: 1fr;
+    }
+    .sidebar-content {
+        display: none; /* Consider changing this if you want sidebar on mobile */
+    }
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.sidebar-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: sticky;
+    top: 24px; 
+}
+
+/* Stats Row Redesign */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Graph Section */
+.graph-section-wrapper {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    display: flex;
+    gap: 2rem;
+    align-items: stretch;
+}
+
+@media (max-width: 900px) {
+    .graph-section-wrapper {
+        flex-direction: column;
+    }
+}
+
+.spending-graph-side {
+    flex: 2;
+    border-right: 1px solid var(--border-color);
+    padding-right: 2rem;
+}
+
+@media (max-width: 900px) {
+    .spending-graph-side {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding-right: 0;
+        padding-bottom: 2rem;
+    }
+}
+
+.savings-summary-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Graph CSS */
+.spending-graph-container {
+    height: 100%;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+.graph-title {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.graph-bars {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    gap: 12px;
+    padding-bottom: 5px;
+}
+
+.graph-bar-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    cursor: pointer;
+    position: relative;
+    height: 100%;
+    justify-content: flex-end;
+}
+
+.graph-bar {
+    width: 24px;
+    background: linear-gradient(to top, #6366f1, #818cf8);
+    border-radius: 6px 6px 0 0;
+    transition: height 0.6s ease-out, opacity 0.2s;
+    min-height: 4px;
+}
+
+.graph-bar-group:hover .graph-bar {
+    opacity: 0.8;
+    background: linear-gradient(to top, #4f46e5, #6366f1);
+}
+
+.graph-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.bar-val-tooltip {
+    position: absolute;
+    top: -30px;
+    background: var(--bg-secondary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    border: 1px solid var(--border-color);
+    white-space: nowrap;
+    z-index: 10;
+    font-weight: 600;
+}
+
+.graph-bar-group:hover .bar-val-tooltip {
+    opacity: 1;
+    top: -45px;
+}
+
+/* Balance / Savings Side */
+.balance-header {
+    margin-bottom: 1.5rem;
+}
+
+.balance-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.balance-amount {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+}
+
+.balance-sub {
+    font-size: 0.85rem;
+    color: #22c55e; /* Success Green */
+    background: rgba(34, 197, 94, 0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.view-report-btn {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.view-report-btn:hover {
+    background: var(--border-color);
+}
+
+/* Transactions Table Redesign */
+.invoices-section {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+.section-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.new-invoice-btn {
+    background: transparent;
+    color: var(--primary-color);
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.new-invoice-btn:hover {
+    color: #4f46e5;
+}
+
+.invoices-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.invoices-table th {
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding-bottom: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.invoices-table td {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+.invoices-table tr:last-child td {
+    border-bottom: none;
+}
+
+.icon {
+    font-size: 1.2rem;
+}
+
+/* Sidebar Widget */
+.payment-widget {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+}
+
+.right-widget h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.add-payment-btn {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border: 1px dashed var(--primary-color);
+    color: var(--primary-color);
+    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.05);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.add-payment-btn:hover {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+/* Override Stat Card to ensure alignment */
+.stat-card {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.2s;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+.stat-info {
+    flex: 1;
+}
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 4px;
+}
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
