@@ -12,16 +12,10 @@ export const useSetu = () => {
 };
 
 export const SetuProvider = ({ children }) => {
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem('access_token'));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem('access_token');
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
+/* removed useEffect that was reading from localStorage */
 
   const login = useCallback(async () => {
     setLoading(true);
