@@ -86,6 +86,9 @@ const Dashboard = ({ setAuthenticated }) => {
   const pageSize = 12;
   const { transactions, allTransactions, loading, error, fetchTransactionsViaSession, total, paginate, rawResponse, notification, loadingMessage } = useTransactionsByConsentId();
   
+  // State to track localStorage changes for reactivity
+  const [refreshKey, setRefreshKey] = useState(0);
+
   // Get user-specific consents dynamically
   const activeConsents = useMemo(() => {
     const saved = localStorage.getItem('setu_consents');
@@ -116,37 +119,25 @@ const Dashboard = ({ setAuthenticated }) => {
       }
     }
     return [];
-  }, []);
+  }, [refreshKey]); // Add refreshKey as dependency
 
-  // Cleanup effect: Remove consents that don't belong to current user
+  // Listen for storage changes from ConsentManager
+  // Listen for storage changes from ConsentManager
   useEffect(() => {
-    const userConsentIdsStr = localStorage.getItem('userConsentIds');
-    let userConsentIds = [];
-    try {
-      userConsentIds = userConsentIdsStr ? JSON.parse(userConsentIdsStr) : [];
-    } catch (error) {
-      console.error("Error parsing userConsentIds:", error);
-    }
+    const handleStorageChange = () => {
+      setRefreshKey(prev => prev + 1);
+    };
 
-    if (userConsentIds.length > 0) {
-      const saved = localStorage.getItem('setu_consents');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          // Keep only consents that belong to current user
-          const filteredConsents = parsed.filter(c => userConsentIds.includes(c.id));
-          // Update localStorage with filtered consents only if different
-          if (JSON.stringify(parsed) !== JSON.stringify(filteredConsents)) {
-            localStorage.setItem('setu_consents', JSON.stringify(filteredConsents));
-          }
-        } catch (error) {
-          console.error("Error cleaning up consents:", error);
-        }
-      }
-    } else {
-      // If user has no consents, clear the setu_consents from localStorage
-      localStorage.setItem('setu_consents', JSON.stringify([]));
-    }
+    // Listen for custom event from ConsentManager
+    window.addEventListener('consentsUpdated', handleStorageChange);
+    
+    // Also check periodically for updates (fallback)
+    const interval = setInterval(handleStorageChange, 2000);
+
+    return () => {
+      window.removeEventListener('consentsUpdated', handleStorageChange);
+      clearInterval(interval);
+    };
   }, []);
 
   // Derived state for the currently selected consent object
@@ -189,6 +180,11 @@ const Dashboard = ({ setAuthenticated }) => {
   const [userInfo, setUserInfo] = useState(getUserInfoFromStorage);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+
+  // Refresh user info on mount to ensure fresh data after login
+  useEffect(() => {
+    setUserInfo(getUserInfoFromStorage());
+  }, []);
 
   const [dashboardStats, setDashboardStats] = useState({
     totalIncome: 0,
@@ -442,11 +438,18 @@ const Dashboard = ({ setAuthenticated }) => {
   };
 
   const handleLogout = () => {
+    // Clear all authentication and user data from localStorage
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("userId");
     localStorage.removeItem("username");
+    localStorage.removeItem("email");
+    localStorage.removeItem("firstName");
+    localStorage.removeItem("lastName");
+    localStorage.removeItem("userConsentIds");
+    localStorage.removeItem("setu_consents");
+    localStorage.removeItem("setu_session_expiry");
     if (setAuthenticated) setAuthenticated(false);
   };
 

@@ -4,39 +4,14 @@ import axios from 'axios';
 import Toast from './Toast';
 import ConfirmationModal from './ConfirmationModal';
 import { LogOut, Undo2 } from 'lucide-react';
+import { saveUserConsent, fetchUserConsents } from '../services/authService';
 import '../styles/ConsentManager.css';
 
 const ConsentManager = () => {
   const { token, login, createConsent, getConsentStatus, loading, error: contextError, logout, clearError } = useSetu();
   
-  // Initialize consents from localStorage and ALWAYS filter by user consent IDs
-  const [consents, setConsents] = useState(() => {
-    const saved = localStorage.getItem('setu_consents');
-    const userConsentIdsStr = localStorage.getItem('userConsentIds');
-    
-    let userConsentIds = [];
-    try {
-      userConsentIds = userConsentIdsStr ? JSON.parse(userConsentIdsStr) : [];
-    } catch (error) {
-      console.error("Error parsing userConsentIds:", error);
-    }
-    
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // ALWAYS filter by user consent IDs - only show user's own consents
-        if (userConsentIds.length > 0) {
-          return parsed.filter(c => userConsentIds.includes(c.id));
-        }
-        // If no userConsentIds, return empty array (user has no consents)
-        return [];
-      } catch (error) {
-        console.error("Error parsing setu_consents:", error);
-        return [];
-      }
-    }
-    return [];
-  });
+  // Initialize consents as empty - will be fetched based on userConsentIds
+  const [consents, setConsents] = useState([]);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedConsent, setSelectedConsent] = useState(null);
@@ -45,6 +20,63 @@ const ConsentManager = () => {
   const [isRevoking, setIsRevoking] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  // Fetch full consent details for user's consent IDs
+  useEffect(() => {
+    const fetchUserConsents = async () => {
+      const userConsentIdsStr = localStorage.getItem('userConsentIds');
+      
+      let userConsentIds = [];
+      try {
+        userConsentIds = userConsentIdsStr ? JSON.parse(userConsentIdsStr) : [];
+      } catch (error) {
+        console.error("Error parsing userConsentIds:", error);
+        return;
+      }
+
+      if (userConsentIds.length === 0) {
+        setConsents([]);
+        return;
+      }
+
+      const fetchedConsents = [];
+
+      try {
+        // Fetch details for each consent ID
+        for (const consentId of userConsentIds) {
+          try {
+            const consentData = await getConsentStatus(consentId);
+            if (consentData) {
+              fetchedConsents.push({
+                id: consentId,
+                ...consentData,
+                status: consentData.status || 'ACTIVE',
+                createdAt: consentData.createdAt || new Date().toISOString()
+              });
+            }
+          } catch (err) {
+            console.error(`Failed to fetch consent ${consentId}:`, err);
+            // Add placeholder if fetch fails
+            fetchedConsents.push({
+              id: consentId,
+              status: 'UNKNOWN',
+              createdAt: new Date().toISOString(),
+              fetchError: true
+            });
+          }
+        }
+
+        setConsents(fetchedConsents);
+        // Update localStorage with fetched consents
+        localStorage.setItem('setu_consents', JSON.stringify(fetchedConsents));
+      } catch (error) {
+        console.error("Error fetching user consents:", error);
+      }
+    };
+
+    fetchUserConsents();
+  }, [getConsentStatus]); // Add getConsentStatus as dependency
 
   // Timer logic for session expiry
   useEffect(() => {
@@ -186,36 +218,10 @@ const ConsentManager = () => {
     if (JSON.stringify(updatedConsentIds.sort()) !== JSON.stringify(userConsentIds.sort())) {
       localStorage.setItem('userConsentIds', JSON.stringify(updatedConsentIds));
     }
+
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new Event('consentsUpdated'));
   }, [consents]);
-
-  // Cleanup effect: Remove consents from localStorage that don't belong to current user
-  useEffect(() => {
-    const userConsentIdsStr = localStorage.getItem('userConsentIds');
-    let userConsentIds = [];
-    try {
-      userConsentIds = userConsentIdsStr ? JSON.parse(userConsentIdsStr) : [];
-    } catch (error) {
-      console.error("Error parsing userConsentIds:", error);
-    }
-
-    if (userConsentIds.length > 0) {
-      const saved = localStorage.getItem('setu_consents');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          // Keep only consents that belong to current user
-          const filteredConsents = parsed.filter(c => userConsentIds.includes(c.id));
-          // Update localStorage with filtered consents
-          localStorage.setItem('setu_consents', JSON.stringify(filteredConsents));
-        } catch (error) {
-          console.error("Error cleaning up consents:", error);
-        }
-      }
-    } else {
-      // If user has no consents, clear the setu_consents from localStorage
-      localStorage.setItem('setu_consents', JSON.stringify([]));
-    }
-  }, []); // Run only on mount
 
   // Check for redirect params (success & id) to update status
   useEffect(() => {
@@ -245,6 +251,30 @@ const ConsentManager = () => {
               }, ...prev];
             }
           });
+
+          // Save consent ID to backend for the user
+          const username = localStorage.getItem('username');
+          if (username) {
+            try {
+              const saveResponse = await saveUserConsent(username, id);
+              if (saveResponse.success) {
+                setToastMessage({ type: 'success', text: saveResponse.message || 'ConsentId saved for user' });
+              }
+
+              // Refetch user's consent IDs
+              const userId = localStorage.getItem('userId');
+              if (userId) {
+                const userConsentsData = await fetchUserConsents(userId);
+                if (userConsentsData && userConsentsData.consentIds) {
+                  localStorage.setItem('userConsentIds', JSON.stringify(userConsentsData.consentIds));
+                  // Dispatch event to notify Dashboard
+                  window.dispatchEvent(new Event('consentsUpdated'));
+                }
+              }
+            } catch (saveError) {
+              console.error('Error saving consent ID on redirect:', saveError);
+            }
+          }
           
           // Clear query params to prevent re-fetching on reload
           // window.history.replaceState({}, document.title, window.location.pathname);
@@ -345,12 +375,43 @@ const ConsentManager = () => {
       setConsents(prev => [newConsent, ...prev]);
       setShowCreateForm(false);
 
+      // Save consent ID to backend and update user's consent list
+      if (result && result.id) {
+        try {
+          const username = localStorage.getItem('username');
+          if (username) {
+            // Save consent ID for user
+            const saveResponse = await saveUserConsent(username, result.id);
+            
+            // Show success toast
+            if (saveResponse.success) {
+              setToastMessage({ type: 'success', text: saveResponse.message || 'ConsentId saved for user' });
+            }
+
+            // Refetch user's consent IDs
+            const userId = localStorage.getItem('userId');
+            if (userId) {
+              const userConsentsData = await fetchUserConsents(userId);
+              if (userConsentsData && userConsentsData.consentIds) {
+                localStorage.setItem('userConsentIds', JSON.stringify(userConsentsData.consentIds));
+                // Dispatch event to notify Dashboard
+                window.dispatchEvent(new Event('consentsUpdated'));
+              }
+            }
+          }
+        } catch (saveError) {
+          console.error('Error saving consent ID:', saveError);
+          setToastMessage({ type: 'error', text: 'Consent created but failed to link with user' });
+        }
+      }
+
       if (result && result.url) {
         window.open(result.url, '_blank');
       }
     } catch (err) {
       console.error("Create consent error:", err);
       setLocalError('Failed to create consent.');
+      setToastMessage({ type: 'error', text: 'Failed to create consent' });
     } finally {
       setIsSubmitting(false);
     }
@@ -754,6 +815,14 @@ const ConsentManager = () => {
         message="Are you sure you want to revoke this consent? This action cannot be undone."
         isLoading={isRevoking}
       />
+
+      {toastMessage && (
+        <Toast
+          message={toastMessage.text}
+          type={toastMessage.type}
+          onClose={() => setToastMessage(null)}
+        />
+      )}
     </div>
   );
 };

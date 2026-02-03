@@ -20,3 +20,17 @@ export async function fetchUserConsents(userId) {
     throw error;
   }
 }
+
+// Save consent ID for user
+export async function saveUserConsent(username, consentId) {
+  try {
+    const response = await axios.post('http://localhost:8086/api/auth/internal/user/consent', {
+      username,
+      consentId
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error saving user consent:', error);
+    throw error;
+  }
+}

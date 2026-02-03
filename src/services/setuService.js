@@ -61,7 +61,8 @@ export const setuService = {
         const response = await axios.get(`http://localhost:8085/api/setu/transaction/${consentId}/ingestData`, {}, {
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            timeout: 120000 // 120 seconds (2 minutes) timeout for long-running ingest operation
         });
         return response.data;
     } catch (error) {

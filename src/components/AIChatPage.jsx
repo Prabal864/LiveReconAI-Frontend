@@ -388,7 +388,7 @@ const AIChatPage = ({ activeConsents = [] }) => {
         // Show Trigger Toast
         setToast({
             title: "Ingestion Started",
-            message: `Triggering ingestion for consent ${consentLabel}`,
+            message: `Triggering ingestion for consent ${consentLabel}. This may take up to 2 minutes...`,
             type: 'loading', // Use loading to show spinner
             duration: 4000
         });
@@ -413,8 +413,25 @@ const AIChatPage = ({ activeConsents = [] }) => {
                  { text: "Used 1 reference", status: "header" },
                  { text: "Initializing ingestion pipeline...", status: "done" },
                  { text: "Connecting to SETU backend...", status: "done" },
-                 { text: "Vectorizing transaction data...", status: "active" }
-            ]), 2500);
+                 { text: "Fetching transaction data from consent...", status: "active" }
+            ]), 3000);
+
+            setTimeout(() => setThoughtSteps([
+                 { text: "Used 1 reference", status: "header" },
+                 { text: "Initializing ingestion pipeline...", status: "done" },
+                 { text: "Connecting to SETU backend...", status: "done" },
+                 { text: "Fetching transaction data from consent...", status: "done" },
+                 { text: "Processing and vectorizing transactions...", status: "active" }
+            ]), 10000);
+
+            setTimeout(() => setThoughtSteps([
+                 { text: "Used 1 reference", status: "header" },
+                 { text: "Initializing ingestion pipeline...", status: "done" },
+                 { text: "Connecting to SETU backend...", status: "done" },
+                 { text: "Fetching transaction data from consent...", status: "done" },
+                 { text: "Processing and vectorizing transactions...", status: "done" },
+                 { text: "Storing in RAG vector database...", status: "active" }
+            ]), 30000);
 
             const result = await setuService.ingestData(consentId);
             
