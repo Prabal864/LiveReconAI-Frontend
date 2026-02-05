@@ -1,0 +1,448 @@
+/* Anomaly Detection Styles */
+
+.anomaly-detection-container {
+    padding: 1.5rem;
+    overflow-y: auto;
+    height: 100%;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+}
+
+.anomaly-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.anomaly-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.anomaly-subtitle {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    margin: 0.25rem 0 0 0;
+}
+
+.alerts-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 2rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fca5a5;
+}
+
+.alert-dot {
+    width: 8px;
+    height: 8px;
+    background: #ef4444;
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Main Alert Card */
+.main-alert-card {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.alert-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: rgba(239, 68, 68, 0.2);
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+    flex-shrink: 0;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.5rem 0;
+}
+
+.alert-description {
+    font-size: 0.875rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+    margin: 0 0 1rem 0;
+}
+
+.alert-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.813rem;
+    color: #94a3b8;
+}
+
+.detail-item svg {
+    color: #64748b;
+}
+
+.alert-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-block-transaction,
+.btn-confirm-transaction,
+.btn-analyze {
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-block-transaction {
+    background: #ef4444;
+    color: #fff;
+}
+
+.btn-block-transaction:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-confirm-transaction {
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+}
+
+.btn-confirm-transaction:hover {
+    background: #334155;
+    color: #fff;
+}
+
+.btn-analyze {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+}
+
+.btn-analyze:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-analyze:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Analysis Results Card */
+.analysis-results-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid #334155;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.analysis-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    color: #3b82f6;
+}
+
+.analysis-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.analysis-content {
+    color: #cbd5e1;
+    font-size: 0.875rem;
+    line-height: 1.7;
+}
+
+.analysis-answer p {
+    margin: 0 0 1rem 0;
+    white-space: pre-wrap;
+}
+
+.related-transactions h4,
+.ai-insights h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 1.5rem 0 0.75rem 0;
+}
+
+.transaction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid #334155;
+    border-radius: 0.5rem;
+}
+
+.txn-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.txn-merchant {
+    color: #e2e8f0;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.txn-date {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.txn-amount {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.ai-insights ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.ai-insights li {
+    margin-bottom: 0.5rem;
+    color: #cbd5e1;
+}
+
+/* Anomaly Grid */
+.anomaly-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 1400px) {
+    .anomaly-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.recent-alerts-card,
+.risk-analysis-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid #334155;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 1rem 0;
+}
+
+/* Recent Alerts */
+.alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid #334155;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.alert-item:hover {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: #475569;
+}
+
+.alert-item-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+}
+
+.alert-item-content {
+    flex: 1;
+}
+
+.alert-item-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 0.25rem;
+}
+
+.alert-item-description {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.alert-item-time {
+    font-size: 0.75rem;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+/* Risk Analysis */
+.risk-chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.risk-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #334155;
+}
+
+.legend-item:last-child {
+    border-bottom: none;
+}
+
+.legend-label {
+    font-size: 0.875rem;
+    color: #94a3b8;
+}
+
+.legend-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Sidebar Tabs */
+.sidebar-tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #334155;
+}
+
+.tab-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #94a3b8;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+    color: #cbd5e1;
+}
+
+.tab-button.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+}
+
+.anomaly-tab-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Scrollbar Styling */
+.anomaly-detection-container::-webkit-scrollbar,
+.anomaly-tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.anomaly-detection-container::-webkit-scrollbar-track,
+.anomaly-tab-content::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.3);
+}
+
+.anomaly-detection-container::-webkit-scrollbar-thumb,
+.anomaly-tab-content::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 3px;
+}
+
+.anomaly-detection-container::-webkit-scrollbar-thumb:hover,
+.anomaly-tab-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.5);
+}

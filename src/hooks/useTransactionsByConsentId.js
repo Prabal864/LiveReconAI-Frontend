@@ -79,7 +79,7 @@ export function useTransactionsByConsentId() {
 
       // Step 1: Create/Get Data Session via Backend Proxy
       setLoadingMessage("Creating data session...");
-      const sessionRes = await axios.get(`http://206.189.135.116:8072/api/setu/auth/${consentId}/consentDataSession`, {
+      const sessionRes = await axios.get(`https://api.prabalsingh.dev/api/setu/auth/${consentId}/consentDataSession`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` 
@@ -94,7 +94,7 @@ export function useTransactionsByConsentId() {
 
       // Step 2: Get FI Data via Backend Proxy
       setLoadingMessage("Fetching financial data...");
-      const fiDataRes = await axios.get(`http://206.189.135.116:8072/api/setu/auth/${sessionId}/getFiData`, {
+      const fiDataRes = await axios.get(`https://api.prabalsingh.dev/api/setu/auth/${sessionId}/getFiData`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` // Required by backend controller

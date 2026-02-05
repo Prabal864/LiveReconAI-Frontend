@@ -37,7 +37,7 @@ const AIResponseDisplay = ({ content, originalPrompt }) => {
         setIsPageLoading(true);
         
         try {
-            const response = await axios.post('http://206.189.135.116:9000/prompt', {
+            const response = await axios.post('https://api.prabalsingh.dev/api/setu/auth/prompt', {
                 prompt: originalPromptText,
                 page: pageNum
             });
@@ -61,7 +61,7 @@ const AIResponseDisplay = ({ content, originalPrompt }) => {
             const pages = displayContent.pagination.total_pages;
             const promises = [];
             for (let i = 1; i <= pages; i++) {
-                promises.push(axios.post('http://206.189.135.116:9000/prompt', {
+                promises.push(axios.post('https://api.prabalsingh.dev/api/setu/auth/prompt', {
                     prompt: originalPrompt,
                     page: i
                 }));
@@ -503,7 +503,7 @@ const AIChatPage = ({ activeConsents = [] }) => {
                 { text: "Generating financial insights...", status: "active" }
             ]), 2800);
 
-            const response = await axios.post('http://206.189.135.116:9000/prompt', {
+            const response = await axios.post('https://api.prabalsingh.dev/api/setu/auth/prompt', {
                 prompt: userMsg.content
             });
 
@@ -625,7 +625,7 @@ const AIChatPage = ({ activeConsents = [] }) => {
                         
                         {isDropdownOpen && (
                             <div className="custom-options-list">
-                                {activeConsents.map(c => (
+                                {activeConsents.map((c, index) => (
                                     <div 
                                         key={c.id} 
                                         className={`custom-option ${selectedConsentForIngest === c.id ? 'selected' : ''}`}
@@ -633,20 +633,34 @@ const AIChatPage = ({ activeConsents = [] }) => {
                                             setSelectedConsentForIngest(c.id);
                                             setIsDropdownOpen(false);
                                         }}
+                                        style={{ animationDelay: `${index * 0.05}s` }}
                                     >
                                         <div className="option-icon-wrapper">
-                                            <Database size={14} />
+                                            <Database size={16} />
                                         </div>
                                         <div className="option-content">
-                                            <span className="option-id">Consent {c.id.slice(0, 8)}...</span>
-                                            <span className="option-status">Active</span>
+                                            <div className="option-header">
+                                                <span className="option-id">Consent {c.id.slice(0, 8)}...</span>
+                                                <span className="option-status-badge">
+                                                    <span className="status-dot"></span>
+                                                    ACTIVE
+                                                </span>
+                                            </div>
+                                            <div className="option-meta">
+                                                <span className="option-vua">{c.vua ? c.vua.split('@')[0] : (localStorage.getItem('username') || localStorage.getItem('firstName') || 'User')}</span>
+                                                <span className="option-date">Created {new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                            </div>
                                         </div>
-                                        {selectedConsentForIngest === c.id && <CheckCircle2 size={14} className="check-icon" />}
+                                        {selectedConsentForIngest === c.id && (
+                                            <CheckCircle2 size={18} className="check-icon" />
+                                        )}
                                     </div>
                                 ))}
                                 {activeConsents.length === 0 && (
-                                    <div style={{padding:'12px', fontSize:'0.85rem', color:'var(--text-secondary)', textAlign:'center'}}>
-                                        No active consents found
+                                    <div className="empty-consents-message">
+                                        <Database size={20} style={{ opacity: 0.3 }} />
+                                        <span>No active consents found</span>
+                                        <small>Create a consent to get started</small>
                                     </div>
                                 )}
                             </div>

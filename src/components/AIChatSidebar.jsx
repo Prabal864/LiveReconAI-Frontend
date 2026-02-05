@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { X, Send, Bot, User, Sparkles } from 'lucide-react';
+import { X, Send, Bot, User, Sparkles, Shield, MessageSquare } from 'lucide-react';
+import AnomalyDetection from './AnomalyDetection';
 import "../styles/AIChatSidebar.css";
 
 const AIChatSidebar = ({ isOpen, onClose }) => {
+    const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'anomaly'
     const [prompt, setPrompt] = useState("");
     const [messages, setMessages] = useState([
         { 
@@ -44,7 +46,7 @@ const AIChatSidebar = ({ isOpen, onClose }) => {
 
         try {
             // Updated URL to match requirements
-            const response = await axios.post('http://206.189.135.116:9000/prompt', {
+            const response = await axios.post('https://api.prabalsingh.dev/api/setu/auth/prompt', {
                 prompt: userMsg.content
             });
 
@@ -162,7 +164,28 @@ const AIChatSidebar = ({ isOpen, onClose }) => {
                     </button>
                 </div>
 
-                <div className="ai-chat-messages">
+                {/* Tab Navigation */}
+                <div className="sidebar-tabs">
+                    <button 
+                        className={`tab-button ${activeTab === 'chat' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('chat')}
+                    >
+                        <MessageSquare size={18} />
+                        Chat
+                    </button>
+                    <button 
+                        className={`tab-button ${activeTab === 'anomaly' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('anomaly')}
+                    >
+                        <Shield size={18} />
+                        Anomaly Detection
+                    </button>
+                </div>
+
+                {/* Chat Tab Content */}
+                {activeTab === 'chat' && (
+                    <>
+                        <div className="ai-chat-messages">
                     {messages.map((msg) => (
                         <div key={msg.id} className={`chat-message ${msg.role}`}>
                             <div className="message-meta">
@@ -187,7 +210,16 @@ const AIChatSidebar = ({ isOpen, onClose }) => {
                     )}
                     <div ref={messagesEndRef} />
                 </div>
+        </>
+                )}
 
+                {/* Anomaly Detection Tab Content */}
+                {activeTab === 'anomaly' && (
+                    <div className="anomaly-tab-content">
+                        <AnomalyDetection />
+                    </div>
+                )}
+            
                 <div className="ai-chat-input-area">
                     <div className="input-wrapper">
                         <textarea

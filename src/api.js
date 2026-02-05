@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://206.189.135.116:8086/api';
+export const API_BASE_URL = 'https://api.prabalsingh.dev/api';
 
 export async function apiFetch(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -41,7 +41,7 @@ export async function apiFetch(endpoint, options = {}) {
 // Fetch all transactions for a consentId (pagination handled on frontend)
 export async function fetchTransactionsByConsentId(consentId) {
   const SERVER_PORT = import.meta.env.VITE_SERVER_PORT || 8085;
-  const url = `http://206.189.135.116:${SERVER_PORT}/api/setu/transaction/byConsentID?consentId=${consentId}`;
+  const url = `https://api.prabalsingh.dev/api/setu/transaction/byConsentID?consentId=${consentId}`;
   try {
     const headers = {};
     const accessToken = localStorage.getItem("accessToken");

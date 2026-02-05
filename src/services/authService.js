@@ -13,7 +13,7 @@ export async function login(data) {
 // Fetch user-specific consent IDs
 export async function fetchUserConsents(userId) {
   try {
-    const response = await axios.get(`http://206.189.135.116:8086/api/auth/internal/user/${userId}/consents`);
+    const response = await axios.get(`https://api.prabalsingh.dev/api/auth/internal/user/${userId}/consents`);
     return response.data;
   } catch (error) {
     console.error('Error fetching user consents:', error);
@@ -24,7 +24,7 @@ export async function fetchUserConsents(userId) {
 // Save consent ID for user
 export async function saveUserConsent(username, consentId) {
   try {
-    const response = await axios.post('http://206.189.135.116:8086/api/auth/internal/user/consent', {
+    const response = await axios.post('https://api.prabalsingh.dev/api/auth/internal/user/consent', {
       username,
       consentId
     });

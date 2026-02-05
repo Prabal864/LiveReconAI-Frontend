@@ -48,10 +48,18 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  Filter,
+  Calendar,
+  Search,
+  Smartphone,
+  Globe,
+  Download,
+  MoreHorizontal,
   User,
   Edit,
   ChevronDown,
   Wallet,
+  Database,
   TrendingUp,
   TrendingDown,
   Bot,
@@ -76,6 +84,7 @@ const Dashboard = ({ setAuthenticated }) => {
   });
   const [theme, setTheme] = useState("dark");
   const [selectedConsentId, setSelectedConsentId] = useState("ALL"); // New State for Dropdown
+  const [isConsentDropdownOpen, setIsConsentDropdownOpen] = useState(false);
   const [graphTimeRange, setGraphTimeRange] = useState("Weekly"); // State for Graph Time Range
   const [graphStartDate, setGraphStartDate] = useState(""); // Custom Start Date
   const [graphEndDate, setGraphEndDate] = useState("");   // Custom End Date
@@ -134,6 +143,20 @@ const Dashboard = ({ setAuthenticated }) => {
       window.removeEventListener('consentsUpdated', handleStorageChange);
     };
   }, []);
+
+  // Close consent dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isConsentDropdownOpen && !event.target.closest('.custom-consent-dropdown')) {
+        setIsConsentDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isConsentDropdownOpen]);
 
   // Derived state for the currently selected consent object
   const currentConsent = useMemo(() => {
@@ -565,33 +588,54 @@ const Dashboard = ({ setAuthenticated }) => {
 
   const renderPagination = () => {
     const totalPages = Math.ceil(total / pageSize);
-    if (totalPages <= 1) return null;
+    if (!totalPages || totalPages <= 1) return null;
 
     const pages = [];
-    // Always show first page
-    pages.push(1);
+    const minPage = 1;
+    const maxPage = totalPages;
 
-    if (page > 3) {
-      pages.push('...');
-    }
+    // Logic to show a window of pages around current page
+    // Always include first, last, and window around current
+    // e.g. 1 ... 4 5 6 ... 10
 
-    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
-      pages.push(i);
-    }
+    if (maxPage <= 7) {
+        // Show all if few
+        for (let i = 1; i <= maxPage; i++) pages.push(i);
+    } else {
+        pages.push(1);
+        
+        let startWindow = Math.max(2, page - 1);
+        let endWindow = Math.min(maxPage - 1, page + 1);
 
-    if (page < totalPages - 2) {
-      pages.push('...');
-    }
+        // Adjust window if near start
+        if (page <= 3) {
+            endWindow = 4;
+        }
+        // Adjust window if near end
+        if (page >= maxPage - 2) {
+            startWindow = maxPage - 3;
+        }
 
-    if (totalPages > 1) {
-      pages.push(totalPages);
+        if (startWindow > 2) {
+            pages.push('...');
+        }
+        
+        for (let i = startWindow; i <= endWindow; i++) {
+            pages.push(i);
+        }
+        
+        if (endWindow < maxPage - 1) {
+            pages.push('...');
+        }
+        
+        pages.push(maxPage);
     }
 
     return (
       <div className="pagination-container">
         <button 
           className="page-nav-btn"
-          onClick={() => handlePageChange(page - 1)}
+          onClick={() => handlePageChange(Math.max(1, page - 1))}
           disabled={page === 1 || loading}
         >
           <ChevronLeft size={20} />
@@ -603,7 +647,7 @@ const Dashboard = ({ setAuthenticated }) => {
               key={i}
               className={`page-number ${p === page ? 'active' : ''} ${p === '...' ? 'dots' : ''}`}
               onClick={() => typeof p === 'number' && handlePageChange(p)}
-              disabled={p === '...'}
+              disabled={p === '...' || loading || p === page}
             >
               {p}
             </button>
@@ -612,7 +656,7 @@ const Dashboard = ({ setAuthenticated }) => {
 
         <button 
           className="page-nav-btn"
-          onClick={() => handlePageChange(page + 1)}
+          onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages || loading}
         >
           <ChevronRight size={20} />
@@ -1028,7 +1072,10 @@ const Dashboard = ({ setAuthenticated }) => {
             {/* Sidebar Column */}
             <div className="sidebar-content">
                 <div className="right-widget payment-widget">
-                    <h3>Linked Account</h3>
+                    <div className="widget-header-flex">
+                        <h3>Linked Accounts</h3>
+                        <span className="account-count-badge">{activeConsents.length}</span>
+                    </div>
                     
                     {/* Animated Stacked Cards Wrapper */}
                     <div 
@@ -1046,7 +1093,10 @@ const Dashboard = ({ setAuthenticated }) => {
                              const styleObj = getCardStyle(consent.id, i);
                              const cleanId = (consent.id || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
                              const displayId = cleanId.padEnd(16, "0").slice(0, 16).match(/.{1,4}/g)?.join(" ") || "0000 0000 0000 0000";
-                             const isTop = i === 0;
+                             
+                             // Get user info from localStorage or VUA
+                             const username = localStorage.getItem('username') || localStorage.getItem('firstName') || 'User';
+                             const holderName = consent.vua ? consent.vua.split('@')[0].toUpperCase() : username.toUpperCase();
                              
                              // Calculate dynamic styles for stack/spread animation
                              const stackStyle = isStackExpanded 
@@ -1070,34 +1120,53 @@ const Dashboard = ({ setAuthenticated }) => {
                                     className="card-stack-item"
                                     style={stackStyle}
                                 >
-                                    <div className="credit-card" style={{ background: styleObj.background, marginBottom: '0', cursor: 'pointer' }}>
-                                        {/* Noise Texture & Shine Effect */}
+                                    <div className="modern-consent-card" style={{ background: styleObj.background }}>
+                                        {/* Card Effects */}
                                         <div className="card-noise" />
                                         <div className="card-shine" />
                                         
+                                        {/* Status Badge */}
+                                        <div className="card-status-badge">
+                                            <span className="status-dot-pulse active"></span>
+                                            <span>ACTIVE</span>
+                                        </div>
+                                        
                                         <div className="card-content">
-                                            <div className="card-top">
-                                                <div className="card-chip" />
-                                                <div className="card-contactless" style={{opacity: 0.9}}>
-                                                    {/* Contactless Wave Icon */}
-                                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{transform: 'rotate(45deg)'}}>
-                                                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 4 3.5 6 6.5"/>
+                                            <div className="card-top-section">
+                                                <div className="card-chip-modern">
+                                                    <div className="chip-line"></div>
+                                                    <div className="chip-line"></div>
+                                                    <div className="chip-line"></div>
+                                                </div>
+                                                <div className="card-contactless-icon">
+                                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M12 10.9c-.6.6-1.5.6-2.1 0-.6-.6-.6-1.5 0-2.1.6-.6 1.5-.6 2.1 0 .6.6.6 1.5 0 2.1z" fill="rgba(255,255,255,0.8)" />
+                                                        <path d="M14.8 13.7c1.4-1.4 1.4-3.7 0-5.1-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0 2.2 2.2 2.2 5.7 0 7.9-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4z" fill="rgba(255,255,255,0.7)" />
+                                                        <path d="M17.6 16.5c2.9-2.9 2.9-7.7 0-10.6-.4-.4-.4-1 0-1.4.4-.4 1-.4 1.4 0 3.7 3.7 3.7 9.6 0 13.4-.4.4-1 .4-1.4 0-.4-.4-.4-1 0-1.4z" fill="rgba(255,255,255,0.5)" />
                                                     </svg>
                                                 </div>
                                             </div>
 
-                                            <div className="card-number">{displayId}</div>
+                                            <div className="card-number-display">{displayId}</div>
 
-                                            <div className="card-bottom">
-                                                <div className="card-info-group">
-                                                    <label>Holder</label>
-                                                    <div>{consent.vua || 'Unknown User'}</div>
-                                                    <div className="card-logo" style={{marginTop: '4px'}}>SETU</div>
+                                            <div className="card-bottom-section">
+                                                <div className="card-info-column">
+                                                    <span className="card-label">HOLDER</span>
+                                                    <span className="card-value">{holderName}</span>
+                                                    <span className="card-provider">SETU CONSENT</span>
                                                 </div>
-                                                <div className="card-info-group" style={{textAlign: 'right'}}>
-                                                    <label>Created</label>
-                                                    <div>{new Date(consent.createdAt).toLocaleDateString()}</div>
+                                                <div className="card-info-column" style={{textAlign: 'right'}}>
+                                                    <span className="card-label">CREATED</span>
+                                                    <span className="card-value">
+                                                        {new Date(consent.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                                                    </span>
                                                 </div>
+                                            </div>
+                                            
+                                            {/* Card Logo Circles */}
+                                            <div className="card-logo-circles">
+                                                <div className="circle red"></div>
+                                                <div className="circle yellow"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -1106,12 +1175,15 @@ const Dashboard = ({ setAuthenticated }) => {
                         })}
                         {activeConsents.length > 1 && !isStackExpanded && (
                             <div className="card-stack-hint">
-                                Click to view {activeConsents.length} cards
+                                <ChevronDown size={14} /> Click to view all {activeConsents.length} accounts
                             </div>
                         )}
                     </div>
 
-                    <button className="add-payment-btn" onClick={() => setActiveSection('Consent')}>Manage Accounts</button>
+                    <button className="add-payment-btn" onClick={() => setActiveSection('Consent')}>
+                        <Database size={16} />
+                        Manage Consents
+                    </button>
                     
                 </div>
 
@@ -1141,6 +1213,50 @@ const Dashboard = ({ setAuthenticated }) => {
                                 </Bar>
                             </BarChart>
                          </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div className="widget-card" style={{marginTop: '20px'}}>
+                    <div className="widget-header" style={{marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                        <h3 className="widget-title">Recent Activity</h3>
+                        <button className="view-all-link" onClick={() => setActiveSection("Transactions")}>View All</button>
+                    </div>
+                    <div className="mini-transactions-list">
+                        {transactions.length === 0 ? (
+                            <div className="empty-text-mini" style={{fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem'}}>
+                                No recent activity
+                            </div>
+                        ) : (
+                            transactions.slice(0, 5).map((tx, i) => {
+                                 // Safely handle amount parsing
+                                 let amountVal = 0;
+                                 let isDebit = false;
+                                 try {
+                                     const rawAmt = tx.amount || tx.value || 0;
+                                     isDebit = (tx.type || '').toUpperCase() === 'DEBIT' || String(rawAmt).startsWith('-');
+                                     amountVal = Math.abs(parseFloat(String(rawAmt).replace(/[^0-9.-]+/g,"")));
+                                 } catch(e) {}
+
+                                 return (
+                                    <div key={i} className="mini-tx-item">
+                                        <div className={`mini-tx-icon ${isDebit ? 'debit' : 'credit'}`}>
+                                            {isDebit ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
+                                        </div>
+                                        <div className="mini-tx-details">
+                                            <span className="mini-tx-title">
+                                                {tx.narration || tx.description || 'Transaction'}
+                                            </span>
+                                            <span className="mini-tx-date">
+                                                {tx.timestamp ? new Date(tx.timestamp).toLocaleDateString(undefined, {month: 'short', day: 'numeric'}) : 'Today'}
+                                            </span>
+                                        </div>
+                                        <div className={`mini-tx-amount ${isDebit ? 'debit' : 'credit'}`}>
+                                            {isDebit ? '-' : '+'}{formatCurrency(amountVal, '₹')}
+                                        </div>
+                                    </div>
+                                 );
+                            })
+                        )}
                     </div>
                 </div>
 
@@ -1190,10 +1306,6 @@ const Dashboard = ({ setAuthenticated }) => {
 
   const sectionInfo = {
     Dashboard: { title: "Dashboard", subtitle: "Overview of your financial activity" },
-    Statistics: { title: "Statistics", subtitle: "Analyze your spending habits" },
-    Savings: { title: "Savings", subtitle: "Track your savings goals" },
-    Portfolio: { title: "Portfolio", subtitle: "Manage your investments" },
-    Messages: { title: "Messages", subtitle: "Recent communications" },
     Transactions: { title: "Transactions", subtitle: "Review your transaction history" },
     Consent: { title: "Consent Management", subtitle: "Manage your financial data consents securely" },
     Settings: { title: "Settings", subtitle: "Account configuration" },
@@ -1218,18 +1330,6 @@ const Dashboard = ({ setAuthenticated }) => {
           <ul>
             <li className={activeSection === "Dashboard" ? "active" : ""} onClick={() => setActiveSection("Dashboard")}>
               <span className="icon"><LayoutDashboard size={20} /></span> {!isSidebarCollapsed && "Dashboard"}
-            </li>
-            <li className={activeSection === "Statistics" ? "active" : ""} onClick={() => setActiveSection("Statistics")}>
-              <span className="icon"><BarChart2 size={20} /></span> {!isSidebarCollapsed && "Statistics"}
-            </li>
-            <li className={activeSection === "Savings" ? "active" : ""} onClick={() => setActiveSection("Savings")}>
-              <span className="icon"><PiggyBank size={20} /></span> {!isSidebarCollapsed && "Savings"}
-            </li>
-            <li className={activeSection === "Portfolio" ? "active" : ""} onClick={() => setActiveSection("Portfolio")}>
-              <span className="icon"><Briefcase size={20} /></span> {!isSidebarCollapsed && "Portfolio"}
-            </li>
-            <li className={activeSection === "Messages" ? "active" : ""} onClick={() => setActiveSection("Messages")}>
-              <span className="icon"><MessageSquare size={20} /></span> {!isSidebarCollapsed && "Messages"} {(!isSidebarCollapsed) && <span className="badge">4</span>}
             </li>
             <li className={activeSection === "Transactions" ? "active" : ""} onClick={() => setActiveSection("Transactions")}>
               <span className="icon"><ArrowRightLeft size={20} /></span> {!isSidebarCollapsed && "Transactions"}
@@ -1266,24 +1366,83 @@ const Dashboard = ({ setAuthenticated }) => {
             
             {/* Shifted Filter Bar for Dashboard Context */}
             {activeSection === "Dashboard" && (
-                <div className="dashboard-filter-inline" style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                <div className="dashboard-filter-inline" style={{display: 'flex', alignItems: 'center', gap: '10px', position: 'relative'}}>
                     <span className="filter-label" style={{fontSize: '0.85rem', color: 'var(--text-secondary)', display: window.innerWidth < 1200 ? 'none' : 'block'}}>For:</span>
-                    <select 
-                        value={selectedConsentId}
-                        onChange={(e) => setSelectedConsentId(e.target.value)}
-                        className="modern-dropdown"
-                        style={{padding: '8px 12px', minWidth: '200px', fontSize: '0.9rem'}}
-                    >
-                        <option value="ALL">All Accounts (Consolidated)</option>
-                        {activeConsents.map(c => {
-                            const label = c.start 
-                                ? `Card ending in ...${c.id.slice(-4)}` 
-                                : (c.vua ? `${c.vua.split('@')[0]} (${c.vua.split('@')[1] || 'VUA'})` : `Consent ID: ${c.id.slice(0,8)}...`);
-                            return (
-                                <option key={c.id} value={c.id}>{label}</option>
-                            );
-                        })}
-                    </select>
+                    <div className="custom-consent-dropdown" style={{position: 'relative', minWidth: '280px'}}>
+                        <button
+                            type="button"
+                            className="consent-dropdown-trigger"
+                            onClick={() => setIsConsentDropdownOpen(!isConsentDropdownOpen)}
+                        >
+                            <div className="trigger-content">
+                                {selectedConsentId === "ALL" ? (
+                                    <>
+                                        <Wallet size={16} />
+                                        <span>All Accounts (Consolidated)</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Database size={16} />
+                                        <span>
+                                            {(() => {
+                                                const c = activeConsents.find(consent => consent.id === selectedConsentId);
+                                                if (!c) return 'Select Consent';
+                                                return c.vua ? `${c.vua.split('@')[0]}` : `Consent ${c.id.slice(0,8)}...`;
+                                            })()}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                            <ChevronDown size={16} className={`dropdown-arrow ${isConsentDropdownOpen ? 'open' : ''}`} />
+                        </button>
+                        
+                        {isConsentDropdownOpen && (
+                            <div className="consent-dropdown-menu">
+                                <div
+                                    className={`consent-dropdown-item ${selectedConsentId === 'ALL' ? 'selected' : ''}`}
+                                    onClick={() => {
+                                        setSelectedConsentId('ALL');
+                                        setIsConsentDropdownOpen(false);
+                                    }}
+                                >
+                                    <div className="item-icon">
+                                        <Wallet size={18} />
+                                    </div>
+                                    <div className="item-content">
+                                        <div className="item-title">All Accounts (Consolidated)</div>
+                                        <div className="item-subtitle">{activeConsents.length} active consent{activeConsents.length !== 1 ? 's' : ''}</div>
+                                    </div>
+                                    {selectedConsentId === 'ALL' && <CheckCircle2 size={16} className="check-icon" />}
+                                </div>
+                                
+                                {activeConsents.map((c, index) => (
+                                    <div
+                                        key={c.id}
+                                        className={`consent-dropdown-item ${selectedConsentId === c.id ? 'selected' : ''}`}
+                                        onClick={() => {
+                                            setSelectedConsentId(c.id);
+                                            setIsConsentDropdownOpen(false);
+                                        }}
+                                        style={{ animationDelay: `${index * 0.03}s` }}
+                                    >
+                                        <div className="item-icon">
+                                            <Database size={18} />
+                                        </div>
+                                        <div className="item-content">
+                                            <div className="item-title">
+                                                {c.vua ? c.vua.split('@')[0] : `Consent ${c.id.slice(0,8)}...`}
+                                            </div>
+                                            <div className="item-subtitle">
+                                                <span className="status-dot active"></span>
+                                                Active • Created {new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                            </div>
+                                        </div>
+                                        {selectedConsentId === c.id && <CheckCircle2 size={16} className="check-icon" />}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
           </div>

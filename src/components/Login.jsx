@@ -42,7 +42,7 @@ const Login = ({ setAuthenticated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://206.189.135.116:8086/api/auth/login", { username, password }, {
+      const res = await axios.post("https://api.prabalsingh.dev/api/auth/login", { username, password }, {
         headers: { "Content-Type": "application/json" }
       });
       

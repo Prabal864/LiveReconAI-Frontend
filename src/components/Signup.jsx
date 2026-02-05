@@ -59,7 +59,7 @@ const Signup = ({ setAuthenticated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://206.189.135.116:8086/api/auth/register", { 
+      const res = await axios.post("https://api.prabalsingh.dev/api/auth/register", { 
           username, 
           email, 
           password, 

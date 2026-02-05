@@ -252,14 +252,11 @@ const ConsentManager = () => {
             }
           });
 
-          // Save consent ID to backend for the user
+          // Save consent ID to backend for the user (silently, no toast)
           const username = localStorage.getItem('username');
           if (username) {
             try {
               const saveResponse = await saveUserConsent(username, id);
-              if (saveResponse.success) {
-                setToastMessage({ type: 'success', text: saveResponse.message || 'ConsentId saved for user' });
-              }
 
               // Refetch user's consent IDs
               const userId = localStorage.getItem('userId');
@@ -380,13 +377,8 @@ const ConsentManager = () => {
         try {
           const username = localStorage.getItem('username');
           if (username) {
-            // Save consent ID for user
-            const saveResponse = await saveUserConsent(username, result.id);
-            
-            // Show success toast
-            if (saveResponse.success) {
-              setToastMessage({ type: 'success', text: saveResponse.message || 'ConsentId saved for user' });
-            }
+            // Save consent ID for user (silently)
+            await saveUserConsent(username, result.id);
 
             // Refetch user's consent IDs
             const userId = localStorage.getItem('userId');
@@ -401,7 +393,8 @@ const ConsentManager = () => {
           }
         } catch (saveError) {
           console.error('Error saving consent ID:', saveError);
-          setToastMessage({ type: 'error', text: 'Consent created but failed to link with user' });
+          // Only show error toast if linking failed
+          setToastMessage({ type: 'error', text: 'Consent created but failed to link with user account' });
         }
       }
 
@@ -428,7 +421,7 @@ const ConsentManager = () => {
 
     setIsRevoking(true);
     try {
-      await axios.post(`http://206.189.135.116:8072/api/setu/auth/${consentId}/revokeConsent`);
+      await axios.post(`https://api.prabalsingh.dev/api/setu/auth/${consentId}/revokeConsent`);
       
       setConsents(prev => prev.map(c => c.id === consentId ? { ...c, status: 'REVOKED' } : c));
       if (selectedConsent && selectedConsent.id === consentId) {
@@ -798,14 +791,16 @@ const ConsentManager = () => {
         </div>
       )}
 
-      <Toast 
-        message={error} 
-        type="error" 
-        onClose={() => {
-          setLocalError('');
-          clearError();
-        }} 
-      />
+      {(error || localError) && (
+        <Toast 
+          message={error || localError} 
+          type="error" 
+          onClose={() => {
+            setLocalError('');
+            clearError();
+          }} 
+        />
+      )}
 
       <ConfirmationModal
         isOpen={revokeModal.show}
