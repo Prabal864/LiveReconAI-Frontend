@@ -365,9 +365,54 @@ const AIChatPage = ({ activeConsents = [] }) => {
     const [thoughtSteps, setThoughtSteps] = useState([]); // Array of steps for "Thinking" preview
     const [toast, setToast] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const dropdownRef = useRef(null);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
+    
+    // Fetch chat history on component mount
+    useEffect(() => {
+        const fetchChatHistory = async () => {
+            const userId = localStorage.getItem('userId') || localStorage.getItem('username');
+            if (!userId) return;
+
+            setIsLoadingHistory(true);
+            try {
+                const response = await axios.get(`https://api.prabalsingh.dev/history/${userId}`);
+                const { history } = response.data;
+
+                if (history && history.length > 0) {
+                    // Map history to message format (reverse to show newest first)
+                    const historyMessages = history.reverse().flatMap((item, index) => {
+                        const userMessage = {
+                            id: `history-user-${item.id}`,
+                            role: 'user',
+                            content: item.query
+                        };
+
+                        const aiMessage = {
+                            id: `history-ai-${item.id}`,
+                            role: 'ai',
+                            content: { answer: item.response },
+                            originalPrompt: item.query
+                        };
+
+                        return [userMessage, aiMessage];
+                    });
+
+                    // Prepend history messages before the initial welcome message
+                    setMessages(prev => [...historyMessages, ...prev]);
+                }
+            } catch (error) {
+                console.error("Failed to fetch chat history:", error);
+                // Silently fail - user can still use the chat
+            } finally {
+                setIsLoadingHistory(false);
+            }
+        };
+
+        fetchChatHistory();
+    }, []);
     
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -577,6 +622,22 @@ const AIChatPage = ({ activeConsents = [] }) => {
     return (
         <div className="ai-chat-page">
             <div className="ai-chat-container">
+                {isLoadingHistory && (
+                    <div className="ai-message-row ai">
+                        <div className="ai-message-content-wrapper">
+                            <div className="ai-avatar"><Bot size={20} color="#fff" /></div>
+                            <div className="message-content-box">
+                                <div className="thinking-console">
+                                    <div className="thought-content">
+                                        <Loader2 size={14} className="icon-spin" />
+                                        <span className="step-text">Loading chat history...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                
                 {messages.map((msg) => (
                     <div key={msg.id} className={`ai-message-row ${msg.role}`}>
                         <div className="ai-message-content-wrapper">
@@ -600,7 +661,7 @@ const AIChatPage = ({ activeConsents = [] }) => {
                     </div>
                 ))}
 
-                {messages.length === 1 && !isLoading && (
+                {messages.length === 1 && !isLoading && !isLoadingHistory && (
                     <div className="suggestions-grid-wrapper">
                         <div className="suggestions-grid">
                             {suggestionCards.map((card, idx) => (

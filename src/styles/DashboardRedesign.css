@@ -3,7 +3,7 @@
 .dashboard-container-v2 {
     display: flex;
     flex-direction: column;
-    gap: 10px; 
+    gap: 6px; 
     width: 100%;
 }
 
@@ -51,7 +51,7 @@
 .dashboard-content-grid {
     display: grid;
     grid-template-columns: 1fr 256px; /* Main content vs Sidebar specific width */
-    gap: 13px;
+    gap: 8px;
     align-items: start;
 }
 
@@ -67,22 +67,22 @@
 .main-content {
     display: flex;
     flex-direction: column;
-    gap: 13px;
+    gap: 8px;
 }
 
 .sidebar-content {
     display: flex;
     flex-direction: column;
-    gap: 13px;
+    gap: 8px;
     position: sticky;
-    top: 64px; /* Header height (51px) + Gap (13px) */
+    top: 58px; /* Header height (51px) + Gap reduced */
 }
 
 /* Stats Row Redesign */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 6px;
 }
 
 @media (max-width: 768px) {
@@ -117,18 +117,18 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.4rem;
 }
 
 .stat-icon-wrapper {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
-    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 }
 
 .stat-icon-wrapper svg {
@@ -203,8 +203,8 @@
 .quick-insights-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin: 10px 0;
+    gap: 6px;
+    margin: 6px 0;
 }
 
 @media (max-width: 1200px) {
@@ -222,11 +222,11 @@
 .insight-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 0.8rem;
+    border-radius: 8px;
+    padding: 0.6rem;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     transition: all 0.3s ease;
     cursor: pointer;
 }
@@ -238,9 +238,9 @@
 }
 
 .insight-icon-box {
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -302,12 +302,12 @@
 /* Graph Section */
 .graph-section-wrapper {
     background: var(--bg-card);
-    border-radius: 10px;
-    padding: 0.6rem;
+    border-radius: 8px;
+    padding: 0.5rem;
     border: 1px solid var(--border-color);
-    box-shadow: 0 3px 16px rgba(0,0,0,0.02);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.02);
     display: flex;
-    gap: 0.8rem;
+    gap: 0.6rem;
     align-items: stretch;
 }
 
@@ -320,7 +320,7 @@
 .spending-graph-side {
     flex: 2;
     border-right: 1px solid var(--border-color);
-    padding-right: 0.8rem;
+    padding-right: 0.6rem;
 }
 
 @media (max-width: 900px) {
@@ -342,14 +342,14 @@
 /* Graph CSS */
 .spending-graph-container {
     height: 100%;
-    min-height: 160px;
+    min-height: 130px;
     display: flex;
     flex-direction: column;
 }
 
 .graph-title {
-    font-size: 0.88rem;
-    margin-bottom: 1.2rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.8rem;
     color: var(--text-primary);
     font-weight: 600;
 }
@@ -359,8 +359,8 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-around;
-    gap: 10px;
-    padding-bottom: 4px;
+    gap: 6px;
+    padding-bottom: 3px;
 }
 
 .graph-bar-group {
@@ -376,9 +376,9 @@
 }
 
 .graph-bar {
-    width: 19px;
+    width: 16px;
     background: linear-gradient(to top, #2563eb, #60a5fa);
-    border-radius: 5px 5px 0 0;
+    border-radius: 4px 4px 0 0;
     transition: height 0.6s ease-out, opacity 0.2s;
     min-height: 3px;
 }
@@ -607,27 +607,27 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 13px;
+    margin-bottom: 10px;
 }
 .widget-title { font-size: 0.8rem; font-weight: 700; color: var(--text-primary); }
 
 /* Progress Bars (Savings) */
-.savings-list { display: flex; flex-direction: column; gap: 13px; }
+.savings-list { display: flex; flex-direction: column; gap: 10px; }
 .saving-item { display: flex; flex-direction: column; gap: 6px; }
 .saving-info { display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 600; }
 .saving-icon { 
-    width: 26px; height: 26px; border-radius: 6px; 
+    width: 24px; height: 24px; border-radius: 5px; 
     display: flex; align-items: center; justify-content: center; 
-    background: rgba(37,99,235,0.1); color: var(--primary-blue); margin-right: 10px;
+    background: rgba(37,99,235,0.1); color: var(--primary-blue); margin-right: 8px;
 }
 .saving-meta { display: flex; align-items: center; }
 .progress-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
 .progress-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
 
 /* Donut Chart (Statistics) */
-.donut-container { display: flex; align-items: center; justify-content: space-around; padding: 8px 0; }
+.donut-container { display: flex; align-items: center; justify-content: space-around; padding: 6px 0; }
 .donut-chart {
-    width: 112px; height: 112px;
+    width: 96px; height: 96px;
     border-radius: 50%;
     background: conic-gradient(
         var(--primary-blue) 0% 35%, 
@@ -639,12 +639,12 @@
     display: flex; align-items: center; justify-content: center;
 }
 .donut-inner {
-    width: 80px; height: 80px; background: var(--bg-card); border-radius: 50%;
+    width: 68px; height: 68px; background: var(--bg-card); border-radius: 50%;
     position: absolute;
-    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.96rem;
-    box-shadow: inset 0 0 16px rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.88rem;
+    box-shadow: inset 0 0 14px rgba(0,0,0,0.5);
 }
-.chart-legend { display: flex; flex-direction: column; gap: 10px; }
+.chart-legend { display: flex; flex-direction: column; gap: 8px; }
 .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.68rem; color: var(--text-secondary); }
 .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
 
@@ -652,17 +652,17 @@
 .graph-section-wrapper.full-width {
     display: flex; flex-direction: column;
 }
-.graph-header-row { display: flex; justify-content: space-between; margin-bottom: 1.6rem; }
-.graph-stats-row { display: flex; gap: 19px; margin-bottom: 0.8rem; }
+.graph-header-row { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+.graph-stats-row { display: flex; gap: 14px; margin-bottom: 0.6rem; }
 .graph-stat-item { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-secondary); }
 .line-dot { width: 8px; height: 2px; border-radius: 2px; }
 
 /* Mini Bar Charts for Stat Cards */
 .mini-chart {
-    display: flex; align-items: flex-end; gap: 3px; height: 24px; margin-top: 8px;
+    display: flex; align-items: flex-end; gap: 2px; height: 20px; margin-top: 6px;
 }
 .mini-bar {
-    width: 5px; background: rgba(255,255,255,0.2); border-radius: 2px;
+    width: 4px; background: rgba(255,255,255,0.2); border-radius: 2px;
 }
 
 
@@ -691,7 +691,7 @@
 }
 
 .graph-container-svg {
-    margin-top: 10px;
+    margin-top: 6px;
 }
 
 /* Stat Card Hover Effects */
@@ -800,14 +800,14 @@
 /* Modern Consent Card */
 .modern-consent-card {
     width: 100%;
-    height: 220px;
-    border-radius: 16px;
-    padding: 24px;
+    height: 190px;
+    border-radius: 14px;
+    padding: 20px;
     position: relative;
     overflow: hidden;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .modern-consent-card:hover {
@@ -987,7 +987,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .account-count-badge {
