@@ -1,5 +1,6 @@
 
 import axios from "axios";
+import { fetchTransactionsByConsentId } from "../api";
 
 const API_URL = "https://fiu-uat.setu.co"; // Example URL, should be configured
 
@@ -56,12 +57,23 @@ export const setuService = {
   ingestData: async (consentId) => {
     console.log(`Ingesting data for consent ${consentId}...`);
     try {
-        const response = await axios.get(`https://api.prabalsingh.dev/api/setu/transaction/${consentId}/ingestData`, {
+        const userId = localStorage.getItem('userId') || localStorage.getItem('username') || 'Unknown';
+        
+        // First, fetch the transactions for this consent
+        const transactionData = await fetchTransactionsByConsentId(consentId);
+        const transactions = Array.isArray(transactionData) ? transactionData : (transactionData.transactions || []);
+        
+        // Then, send to the new ingest endpoint
+        const response = await axios.post('https://api.prabalsingh.dev/ingest', {
+            context_data: transactions,
+            user_id: userId
+        }, {
             headers: {
                 'Content-Type': 'application/json'
             },
             timeout: 120000
         });
+        
         return response.data;
     } catch (error) {
         if (error.response) {
